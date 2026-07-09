@@ -1,0 +1,123 @@
+//
+//  ContentView.swift
+//  AnalyzeFaceSkin
+//
+//  Created by Bayu Krisna Dwihadi Fahrizal on 08/07/26.
+//
+
+import SwiftUI
+import PhotosUI
+
+struct ContentView: View {
+    @StateObject private var viewModel = CameraViewModel()
+    @State private var showPhotoPicker = false
+    @State private var selectedPhoto: PhotosPickerItem?
+
+    var body: some View {
+        ZStack {
+            cameraLayer
+            flashOverlay
+            capturedLayer
+        }
+        .onAppear { viewModel.setup() }
+        .onChange(of: selectedPhoto) { _, item in loadPhoto(from: item) }
+        .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhoto)
+        .alert("Camera Required", isPresented: $viewModel.permissionDenied) {
+            Button("Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Please grant camera access in Settings.")
+        }
+    }
+
+    @ViewBuilder
+    private var flashOverlay: some View {
+        if viewModel.isFlashOn && !viewModel.cameraService.isTorchAvailable {
+            Color.white
+                .ignoresSafeArea()
+                .opacity(1.0)
+                .allowsHitTesting(false)
+        }
+    }
+
+    @ViewBuilder
+    private var cameraLayer: some View {
+        CameraPreviewView(cameraService: viewModel.cameraService)
+            .ignoresSafeArea()
+            .overlay(alignment: .top) {
+                GuideTextView(text: viewModel.guideText)
+                    .padding(.top, 60)
+            }
+            .overlay(alignment: .center) {
+                FaceOverlayView(
+                    faceState: viewModel.faceState,
+                    ovalColor: viewModel.ovalColor,
+                    progress: viewModel.captureProgress
+                )
+            }
+            .overlay(alignment: .bottom) {
+                CaptureControlsView(
+                    onCapture: { viewModel.capturePhoto() },
+                    onGallery: { showPhotoPicker = true },
+                    onSettings: {},
+                    onFlash: { viewModel.toggleFlash() },
+                    isFlashOn: viewModel.isFlashOn,
+                    showFlash: viewModel.lightingCondition == .lowLight
+                )
+                .padding(.bottom, 40)
+            }
+    }
+
+    @ViewBuilder
+    private var capturedLayer: some View {
+        if case .captured(let image) = viewModel.captureState {
+            Color.black.opacity(0.5).ignoresSafeArea()
+
+            VStack {
+                Spacer()
+
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(40)
+
+                HStack(spacing: 40) {
+                    Button("Retake") {
+                        viewModel.reset()
+                    }
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(.gray)
+                    .clipShape(Circle())
+
+                    Button("Save") {
+                        viewModel.savePhoto()
+                        viewModel.reset()
+                    }
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(.blue)
+                    .clipShape(Circle())
+                }
+
+                Spacer()
+            }
+        }
+    }
+
+    private func loadPhoto(from item: PhotosPickerItem?) {
+        guard let item = item else { return }
+        Task {
+            if let data = try? await item.loadTransferable(type: Data.self),
+               let image = UIImage(data: data) {
+                await MainActor.run {
+                    viewModel.importPhoto(from: image)
+                }
+            }
+        }
+    }
+}
