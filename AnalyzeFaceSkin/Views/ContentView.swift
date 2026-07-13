@@ -9,6 +9,7 @@ import SwiftUI
 import PhotosUI
 
 struct ContentView: View {
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = CameraViewModel()
     @State private var showPhotoPicker = false
     @State private var selectedPhoto: PhotosPickerItem?
@@ -48,6 +49,20 @@ struct ContentView: View {
     private var cameraLayer: some View {
         CameraPreviewView(cameraService: viewModel.cameraService)
             .ignoresSafeArea()
+            .overlay(alignment: .topLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(.black.opacity(0.4))
+                        .clipShape(Circle())
+                }
+                .padding(.leading, 20)
+                .padding(.top, 16)
+            }
             .overlay(alignment: .top) {
                 GuideTextView(text: viewModel.guideText)
                     .padding(.top, 60)
