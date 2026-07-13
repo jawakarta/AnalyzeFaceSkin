@@ -83,6 +83,7 @@ class CameraViewModel: ObservableObject {
     func startScanning() {
         guard let image = capturedImage else { return }
         captureState = .scanning(image)
+        cameraService.stop()
     }
 
     func reset() {
@@ -94,6 +95,7 @@ class CameraViewModel: ObservableObject {
         captureBoundingBox = nil
         lastFaceBoundingBox = nil
         stopStabilityTimer()
+        cameraService.start()
     }
 
     func toggleFlash() {

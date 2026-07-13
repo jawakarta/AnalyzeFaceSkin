@@ -14,12 +14,85 @@ struct ContentView: View {
     @State private var selectedPhoto: PhotosPickerItem?
 
     var body: some View {
-        ZStack {
-            cameraLayer
-            flashOverlay
-            capturedLayer
+        Group {
+            switch viewModel.captureState {
+            case .idle, .detecting, .aligning, .ready, .capturing, .captured:
+                ZStack {
+                    cameraLayer
+                    flashOverlay
+                    
+                    if case .captured(let image) = viewModel.captureState {
+                        Color.black.opacity(0.5).ignoresSafeArea()
+                            .overlay {
+                                VStack {
+                                    Spacer()
+
+                                    // Static preview of the captured face
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .cornerRadius(16)
+                                        .padding(40)
+
+                                    HStack(spacing: 40) {
+                                        Button("Retake") {
+                                            viewModel.reset()
+                                        }
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background(.gray)
+                                        .clipShape(Circle())
+
+                                        Button("Scan") {
+                                            viewModel.startScanning()
+                                        }
+                                        .foregroundColor(.white)
+                                        .padding()
+                                        .background(.blue)
+                                        .clipShape(Circle())
+                                    }
+
+                                    Spacer()
+                                }
+                            }
+                    }
+                }
+                .onAppear { viewModel.setup() }
+                
+            case .scanning(let image):
+                Color.black.ignoresSafeArea()
+                    .overlay {
+                        VStack {
+                            Spacer()
+
+                            // Full screen scanning animation page (camera stopped!)
+                            FaceScanningView(image: image, landmarks: viewModel.capturedFaceLandmarks)
+
+                            HStack(spacing: 40) {
+                                Button("Cancel") {
+                                    viewModel.reset()
+                                }
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(.gray)
+                                .clipShape(Circle())
+
+                                Button("Save") {
+                                    viewModel.savePhoto()
+                                    viewModel.reset()
+                                }
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(.blue)
+                                .clipShape(Circle())
+                            }
+                            .padding(.bottom, 50)
+
+                            Spacer()
+                        }
+                    }
+            }
         }
-        .onAppear { viewModel.setup() }
         .onChange(of: selectedPhoto) { _, item in loadPhoto(from: item) }
         .photosPicker(isPresented: $showPhotoPicker, selection: $selectedPhoto)
         .alert("Camera Required", isPresented: $viewModel.permissionDenied) {
@@ -76,74 +149,6 @@ struct ContentView: View {
                 )
                 .padding(.bottom, 40)
             }
-    }
-
-    @ViewBuilder
-    private var capturedLayer: some View {
-        if case .captured(let image) = viewModel.captureState {
-            Color.black.opacity(0.5).ignoresSafeArea()
-
-            VStack {
-                Spacer()
-
-                // Static preview of the captured face
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .cornerRadius(16)
-                    .padding(40)
-
-                HStack(spacing: 40) {
-                    Button("Retake") {
-                        viewModel.reset()
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(.gray)
-                    .clipShape(Circle())
-
-                    Button("Scan") {
-                        viewModel.startScanning()
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(.blue)
-                    .clipShape(Circle())
-                }
-
-                Spacer()
-            }
-        } else if case .scanning(let image) = viewModel.captureState {
-            Color.black.opacity(0.85).ignoresSafeArea()
-
-            VStack {
-                Spacer()
-
-                // Scanning visual effect overlay
-                FaceScanningView(image: image, landmarks: viewModel.capturedFaceLandmarks)
-
-                HStack(spacing: 40) {
-                    Button("Cancel") {
-                        viewModel.reset()
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(.gray)
-                    .clipShape(Circle())
-
-                    Button("Save") {
-                        viewModel.savePhoto()
-                        viewModel.reset()
-                    }
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(.blue)
-                    .clipShape(Circle())
-                }
-
-                Spacer()
-            }
-        }
     }
 
     private func loadPhoto(from item: PhotosPickerItem?) {
