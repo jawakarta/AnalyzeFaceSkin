@@ -32,6 +32,11 @@ struct ContentView: View {
         } message: {
             Text("Please grant camera access in Settings.")
         }
+        .alert("Wajah Tidak Terdeteksi", isPresented: $viewModel.showNoFaceAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Foto yang Anda pilih atau ambil tidak mendeteksi wajah dengan jelas. Silakan coba lagi dengan pencahayaan dan sudut yang lebih baik.")
+        }
     }
 
     @ViewBuilder
@@ -66,7 +71,8 @@ struct ContentView: View {
                     onSettings: {},
                     onFlash: { viewModel.toggleFlash() },
                     isFlashOn: viewModel.isFlashOn,
-                    showFlash: viewModel.lightingCondition == .lowLight
+                    showFlash: viewModel.lightingCondition == .lowLight,
+                    isCaptureDisabled: !viewModel.faceState.isDetected
                 )
                 .padding(.bottom, 40)
             }
@@ -80,10 +86,9 @@ struct ContentView: View {
             VStack {
                 Spacer()
 
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(40)
+                FaceScanningView(image: image, landmarks: viewModel.capturedFaceLandmarks)
+
+
 
                 HStack(spacing: 40) {
                     Button("Retake") {

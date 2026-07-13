@@ -15,6 +15,8 @@ struct CaptureControlsView: View {
     let isFlashOn: Bool
     let showFlash: Bool
 
+    var isCaptureDisabled: Bool = false
+
     var body: some View {
         HStack(spacing: 60) {
             if showFlash {
@@ -60,6 +62,8 @@ struct CaptureControlsView: View {
                         .frame(width: 60, height: 60)
                 )
         }
+        .disabled(isCaptureDisabled)
+        .opacity(isCaptureDisabled ? 0.4 : 1.0)
     }
 
     private var settingsButton: some View {
