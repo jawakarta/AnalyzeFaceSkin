@@ -80,6 +80,11 @@ class CameraViewModel: ObservableObject {
         photoService.save(image)
     }
 
+    func startScanning() {
+        guard let image = capturedImage else { return }
+        captureState = .scanning(image)
+    }
+
     func reset() {
         capturedImage = nil
         capturedFaceLandmarks = [:]

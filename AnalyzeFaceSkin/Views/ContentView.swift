@@ -86,12 +86,44 @@ struct ContentView: View {
             VStack {
                 Spacer()
 
-                FaceScanningView(image: image, landmarks: viewModel.capturedFaceLandmarks)
-
-
+                // Static preview of the captured face
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .cornerRadius(16)
+                    .padding(40)
 
                 HStack(spacing: 40) {
                     Button("Retake") {
+                        viewModel.reset()
+                    }
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(.gray)
+                    .clipShape(Circle())
+
+                    Button("Scan") {
+                        viewModel.startScanning()
+                    }
+                    .foregroundColor(.white)
+                    .padding()
+                    .background(.blue)
+                    .clipShape(Circle())
+                }
+
+                Spacer()
+            }
+        } else if case .scanning(let image) = viewModel.captureState {
+            Color.black.opacity(0.85).ignoresSafeArea()
+
+            VStack {
+                Spacer()
+
+                // Scanning visual effect overlay
+                FaceScanningView(image: image, landmarks: viewModel.capturedFaceLandmarks)
+
+                HStack(spacing: 40) {
+                    Button("Cancel") {
                         viewModel.reset()
                     }
                     .foregroundColor(.white)

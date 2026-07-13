@@ -15,6 +15,7 @@ enum CaptureState: Equatable {
     case ready
     case capturing
     case captured(UIImage)
+    case scanning(UIImage)
 
     static func == (lhs: CaptureState, rhs: CaptureState) -> Bool {
         switch (lhs, rhs) {
@@ -22,6 +23,8 @@ enum CaptureState: Equatable {
             (.ready, .ready), (.capturing, .capturing):
             return true
         case (.captured, .captured):
+            return true
+        case (.scanning, .scanning):
             return true
         default:
             return false
