@@ -1,0 +1,48 @@
+# Xcode
+#
+# Reference: https://github.com/github/gitignore/blob/main/Swift.gitignore
+
+# Build results
+build/
+DerivedData/
+
+# Signatures and certificates
+*.keystore
+*.provisionprofile
+*.signingreport
+
+# User-specific files (to avoid conflicts in team collaboration)
+*.mode1v3
+*.mode2v3
+*.nib
+*.xcuserstate
+xcuserdata/
+
+# Xcode 8.0+ / Swift 3.0+ Project files
+.swiftpm/
+.build/
+
+# CocoaPods (if used)
+# Pods/
+# Podfile.lock
+# *.xcworkspace
+
+# Carthage (if used)
+Carthage/Build/
+
+# AccuRev
+.accurev
+
+# git-crypt
+.git-crypt/
+
+# OS-specific files
+.DS_Store
+.DocumentRevisions-V100
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
