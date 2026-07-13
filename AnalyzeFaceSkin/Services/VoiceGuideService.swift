@@ -23,6 +23,11 @@ class VoiceGuideService {
         lastSpokenText = text
         lastSpokenTime = now
 
+        // Configure audio session to bypass silent switch and mix with active camera capture session
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playAndRecord, mode: .default, options: [.mixWithOthers, .defaultToSpeaker])
+        try? session.setActive(true)
+
         let utterance = AVSpeechUtterance(string: text)
         utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
         utterance.rate = 0.4
