@@ -52,6 +52,14 @@ class CameraService: NSObject {
     func start() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
+            
+            if !self.session.inputs.isEmpty {
+                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                    self?.session.startRunning()
+                }
+                return
+            }
+            
             self.session.beginConfiguration()
             self.session.sessionPreset = .photo
 

@@ -66,32 +66,36 @@ struct ContentView: View {
                         VStack {
                             Spacer()
 
-                            // Full screen scanning animation page (camera stopped!)
-                            FaceScanningView(image: image, landmarks: viewModel.capturedFaceLandmarks)
+                            FaceScanningView(
+                                image: image,
+                                landmarks: viewModel.capturedFaceLandmarks,
+                                analysisResult: nil,
+                                isAnalyzing: true
+                            )
 
-                            HStack(spacing: 40) {
-                                Button("Cancel") {
-                                    viewModel.reset()
-                                }
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(.gray)
-                                .clipShape(Circle())
-
-                                Button("Save") {
-                                    viewModel.savePhoto()
-                                    viewModel.reset()
-                                }
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(.blue)
-                                .clipShape(Circle())
+                            Button("Cancel") {
+                                viewModel.reset()
                             }
+                            .foregroundColor(.white.opacity(0.8))
+                            .font(.system(.subheadline, design: .monospaced))
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Color.white.opacity(0.1))
+                            .cornerRadius(20)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
                             .padding(.bottom, 50)
 
                             Spacer()
                         }
                     }
+                    
+            case .result(let image, let result):
+                SkinAnalysisResultView(image: image, result: result) {
+                    viewModel.reset()
+                }
             }
         }
         .onChange(of: selectedPhoto) { _, item in loadPhoto(from: item) }
@@ -110,6 +114,11 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("Foto yang Anda pilih atau ambil tidak mendeteksi wajah dengan jelas. Silakan coba lagi dengan pencahayaan dan sudut yang lebih baik.")
+        }
+        .alert("Analysis Failed", isPresented: $viewModel.showAnalysisErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.analysisError ?? "Unknown error occurred.")
         }
     }
 
