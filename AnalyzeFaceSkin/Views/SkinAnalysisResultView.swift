@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SkinAnalysisResultView: View {
     let image: UIImage
     let result: SkinAnalysisResult
     let onDone: () -> Void
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         ZStack {
@@ -119,7 +121,10 @@ struct SkinAnalysisResultView: View {
 
     
     private var doneButton: some View {
-        Button(action: onDone) {
+        Button {
+            saveToHistory()
+            onDone()
+        } label: {
             Text("Done")
                 .font(.system(.headline, design: .rounded))
                 .bold()
@@ -136,6 +141,18 @@ struct SkinAnalysisResultView: View {
                 .cornerRadius(25)
                 .shadow(color: Color.pink.opacity(0.3), radius: 10, x: 0, y: 5)
         }
+    }
+
+    private func saveToHistory() {
+        guard let skinType = result.skinType else { return }
+        let imageData = image.jpegData(compressionQuality: 0.6)
+        let history = SkinAnalysisHistory(
+            skinType: skinType,
+            skinTypeConfidence: result.skinTypeConfidence ?? 0,
+            imageData: imageData
+        )
+        modelContext.insert(history)
+        try? modelContext.save()
     }
     
     private func descriptionForType(_ type: String) -> String {
