@@ -19,7 +19,7 @@ struct FaceOverlayView: View {
                 .frame(width: 250, height: 320)
 
             ProgressRingView(progress: progress)
-                .frame(width: 280, height: 350)
+                .frame(width: 250, height: 320)
         }
     }
 }
