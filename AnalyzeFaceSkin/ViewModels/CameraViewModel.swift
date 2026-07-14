@@ -20,8 +20,13 @@ class CameraViewModel: ObservableObject {
     @Published var isFlashOn = false
     @Published var capturedFaceLandmarks: [String: [CGPoint]] = [:]
     @Published var showNoFaceAlert = false
+    @Published var analysisResult: SkinAnalysisResult? = nil
+    @Published var isAnalyzing = false
+    @Published var analysisError: String? = nil
+    @Published var showAnalysisErrorAlert = false
 
     let cameraService = CameraService()
+    private let skinAnalysisService = SkinAnalysisService()
     private let visionService = VisionService()
     private let voiceService = VoiceGuideService()
     private let photoService = PhotoLibraryService()
@@ -84,6 +89,31 @@ class CameraViewModel: ObservableObject {
         guard let image = capturedImage else { return }
         captureState = .scanning(image)
         cameraService.stop()
+        
+        isAnalyzing = true
+        analysisResult = nil
+        analysisError = nil
+        
+        let startTime = Date()
+        skinAnalysisService.analyze(image: image) { [weak self] result in
+            let elapsed = Date().timeIntervalSince(startTime)
+            let minimumDuration: TimeInterval = 3.0
+            let delay = max(0, minimumDuration - elapsed)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                self?.isAnalyzing = false
+                switch result {
+                case .success(let analysis):
+                    self?.analysisResult = analysis
+                    self?.captureState = .result(image, analysis)
+                case .failure(let error):
+                    print("Skin analysis failed: \(error.localizedDescription)")
+                    self?.analysisError = error.localizedDescription
+                    self?.showAnalysisErrorAlert = true
+                    self?.reset()
+                }
+            }
+        }
     }
 
     func reset() {
@@ -95,6 +125,8 @@ class CameraViewModel: ObservableObject {
         captureBoundingBox = nil
         lastFaceBoundingBox = nil
         stopStabilityTimer()
+        analysisResult = nil
+        isAnalyzing = false
         cameraService.start()
     }
 

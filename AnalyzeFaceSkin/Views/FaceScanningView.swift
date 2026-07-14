@@ -2,7 +2,7 @@
 //  FaceScanningView.swift
 //  AnalyzeFaceSkin
 //
-//  Created by vinkakniv on 13/07/26.
+//  Created by Vinka Alrezky As on 13/07/26.
 //
 
 import SwiftUI
@@ -10,6 +10,8 @@ import SwiftUI
 struct FaceScanningView: View {
     let image: UIImage
     let landmarks: [String: [CGPoint]]
+    let analysisResult: SkinAnalysisResult?
+    let isAnalyzing: Bool
     
     @State private var scanProgress: CGFloat = 0.0
     @State private var meshOpacity: Double = 0.0
@@ -19,11 +21,11 @@ struct FaceScanningView: View {
             // Scanning Status Indicator
             HStack(spacing: 8) {
                 Circle()
-                    .fill(Color.pink)
+                    .fill(isAnalyzing ? Color.pink : Color.green)
                     .frame(width: 8, height: 8)
-                    .opacity(meshOpacity > 0 ? meshOpacity : 0.3)
+                    .opacity(isAnalyzing ? (meshOpacity > 0 ? meshOpacity : 0.3) : 1.0)
                 
-                Text("Scanning your skin...")
+                Text(isAnalyzing ? "Scanning your skin..." : "Skin Analysis Complete")
                     .font(.system(.caption, design: .monospaced))
                     .foregroundColor(.white)
                     .bold()
@@ -35,9 +37,9 @@ struct FaceScanningView: View {
             .cornerRadius(20)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.pink.opacity(0.5), lineWidth: 1)
+                    .stroke(isAnalyzing ? Color.pink.opacity(0.5) : Color.green.opacity(0.5), lineWidth: 1)
             )
-            .shadow(color: Color.pink.opacity(0.3), radius: 6)
+            .shadow(color: isAnalyzing ? Color.pink.opacity(0.3) : Color.green.opacity(0.3), radius: 6)
             
             // Image with Scan Overlays
             ZStack {
@@ -83,43 +85,101 @@ struct FaceScanningView: View {
                     }
                     
                     // 4. Scanning Laser Sweep Line
-                    ZStack {
-                        // Trail glow
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.pink.opacity(0.2),
-                                        Color.pink.opacity(0.0)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
+                    if isAnalyzing {
+                        ZStack {
+                            // Trail glow
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.pink.opacity(0.2),
+                                            Color.pink.opacity(0.0)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
                                 )
-                            )
-                            .frame(height: 50)
-                        
-                        // Laser core
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.cyan,
-                                        Color.pink,
-                                        Color.cyan
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                                .frame(height: 50)
+                            
+                            // Laser core
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.cyan,
+                                            Color.pink,
+                                            Color.cyan
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
                                 )
-                            )
-                            .frame(height: 3)
-                            .shadow(color: Color.pink, radius: 8)
+                                .frame(height: 3)
+                                .shadow(color: Color.pink, radius: 8)
+                        }
+                        .frame(width: size.width)
+                        .position(x: size.width / 2, y: scanProgress * size.height)
                     }
-                    .frame(width: size.width)
-                    .position(x: size.width / 2, y: scanProgress * size.height)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: 420)
             .padding(.horizontal, 20)
+            
+            // Result Card
+            if let result = analysisResult, let type = result.skinType {
+                VStack(spacing: 12) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("SKIN TYPE DETECTED")
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundColor(.cyan)
+                                .bold()
+                                .tracking(2)
+                            
+                            Text(type.capitalized)
+                                .font(.system(.title2, design: .rounded))
+                                .foregroundColor(.white)
+                                .bold()
+                        }
+                        
+                        Spacer()
+                        
+                        if let confidence = result.skinTypeConfidence {
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text("ACCURACY")
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.pink)
+                                    .bold()
+                                    .tracking(2)
+                                
+                                Text(String(format: "%.0f%%", confidence * 100))
+                                    .font(.system(.title2, design: .monospaced))
+                                    .foregroundColor(.pink)
+                                    .bold()
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.white.opacity(0.06))
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [Color.cyan.opacity(0.3), Color.pink.opacity(0.3)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1
+                                    )
+                            )
+                    )
+                    .shadow(color: Color.cyan.opacity(0.1), radius: 10, x: 0, y: 5)
+                }
+                .padding(.horizontal, 20)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .onAppear {
             // Smooth infinite sweep animation
@@ -323,7 +383,7 @@ struct FaceMeshNodesView: View {
 }
 
 #Preview {
-    FaceScanningView(image: UIImage(), landmarks: [:])
+    FaceScanningView(image: UIImage(), landmarks: [:], analysisResult: nil, isAnalyzing: true)
 }
 
 // Glow effect extension
