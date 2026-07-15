@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct HomeView: View {
+    @AppStorage("hasAcceptedAgreement") private var hasAcceptedAgreement = false
+    @State private var showAgreement = false
     @State private var showScanning = false
     @State private var showHistory = false
 
@@ -65,6 +67,14 @@ struct HomeView: View {
         }
         .fullScreenCover(isPresented: $showHistory) {
             HistoryView()
+        }
+        .fullScreenCover(isPresented: $showAgreement) {
+            AgreementView()
+        }
+        .onAppear {
+            if !hasAcceptedAgreement {
+                showAgreement = true
+            }
         }
     }
 }
