@@ -48,8 +48,16 @@ struct SkinAnalysisResultView: View {
 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 24) {
-                        annotatedImageSection
-                            .padding(.horizontal, 20)
+                        VStack(alignment: .center, spacing: 8, ) {
+                            annotatedImageSection
+                            
+                            Label("This classifier isn't 100% accurate, please consult an expert directly.", systemImage: "exclamationmark.triangle.fill")
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                .foregroundColor(.orange.opacity(0.8))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                        }
+                        .padding(.horizontal, 20)
 
                         layerToggleRow
                             .padding(.horizontal, 20)
