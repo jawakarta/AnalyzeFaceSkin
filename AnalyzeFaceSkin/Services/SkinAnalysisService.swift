@@ -8,26 +8,54 @@
 import UIKit
 
 class SkinAnalysisService {
-    private let skinTypeService = SkinTypeClassifierService()
-    
-    // Future models (2 & 3 & 4):
-    // private let skinAcneService = SkinAcneClassifierService()
-    // private let skinWrinklesPoresService = SkinWrinklesPoresClassifierService()
-    
-    func analyze(image: UIImage, completion: @escaping (Result<SkinAnalysisResult, Error>) -> Void) {
-        // Currently, only run skinTypeService.
-        // In the future, run multiple services in parallel (e.g. using DispatchGroup or TaskGroup).
-        skinTypeService.classify(image: image) { result in
-            switch result {
-            case .success(let typeData):
-                let analysisResult = SkinAnalysisResult(
-                    skinType: typeData.type,
-                    skinTypeConfidence: typeData.confidence
-                )
-                completion(.success(analysisResult))
-                
-            case .failure(let error):
-                completion(.failure(error))
+    private lazy var skinTypeService  = SkinTypeClassifierService()
+    private lazy var conditionService = AcneWrinkleDetectionService()
+
+    func analyze(image: UIImage,
+                 completion: @escaping (Result<SkinAnalysisResult, Error>) -> Void) {
+
+        skinTypeService.classify(image: image) { [weak self] typeResult in
+            guard let self = self else { return }
+
+            var skinTypeData: (type: String, confidence: Double)?
+            var captureError: Error?
+
+            switch typeResult {
+            case .success(let d): skinTypeData = d
+            case .failure(let e): captureError = e
+            }
+
+            self.conditionService.detect(image: image) { detectionResult in
+                var conditionData: AcneWrinkleDetectionService.DetectionResult?
+
+                switch detectionResult {
+                case .success(let d): conditionData = d
+                case .failure(let e): if captureError == nil { captureError = e }
+                }
+
+                DispatchQueue.main.async {
+                    if let error = captureError {
+                        completion(.failure(error)); return
+                    }
+
+                    let result = SkinAnalysisResult(
+                        skinType:           skinTypeData?.type,
+                        skinTypeConfidence: skinTypeData?.confidence,
+
+                        acneLevel:         conditionData?.acne.level,
+                        acneConfidence:    conditionData?.acne.confidence,
+                        acneBoundingBoxes: conditionData?.acne.boundingBoxes ?? [],
+
+                        poreLevel:         conditionData?.pores.level,
+                        poreConfidence:    conditionData?.pores.confidence,
+                        poreBoundingBoxes: conditionData?.pores.boundingBoxes ?? [],
+
+                        wrinkleLevel:         conditionData?.wrinkles.level,
+                        wrinkleConfidence:    conditionData?.wrinkles.confidence,
+                        wrinkleBoundingBoxes: conditionData?.wrinkles.boundingBoxes ?? []
+                    )
+                    completion(.success(result))
+                }
             }
         }
     }

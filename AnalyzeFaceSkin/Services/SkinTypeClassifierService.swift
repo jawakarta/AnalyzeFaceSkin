@@ -8,74 +8,83 @@
 import UIKit
 import CoreML
 
+/// Classifies skin type as dry / normal / oily using `SkinTypeClassifier`.
+/// Input : MLMultiArray [1, 3, 224, 224] (ImageNet-normalised float32)
+/// Output: MLMultiArray [1, 3] → softmax → labels ["dry", "normal", "oily"]
 class SkinTypeClassifierService: SkinClassifier {
     typealias Output = (type: String, confidence: Double)
-    
-    private var classifier: SkinTypeClassifier?
-    
-    init() {
-        setupModel()
-    }
-    
-    private func setupModel() {
+
+    private var classifier: SkinTypeClassifier? = {
         do {
-            let configuration = MLModelConfiguration()
-            self.classifier = try SkinTypeClassifier(configuration: configuration)
+            let model = try SkinTypeClassifier(configuration: MLModelConfiguration())
             print("SkinTypeClassifier model loaded successfully")
+            return model
         } catch {
-            print("Failed to load SkinTypeClassifier model: \(error.localizedDescription) - Full error: \(error)")
+            print("Failed to load SkinTypeClassifier: \(error.localizedDescription)")
+            return nil
         }
-    }
-    
+    }()
+
     func classify(image: UIImage, completion: @escaping (Result<Output, Error>) -> Void) {
         guard let classifier = classifier else {
-            let error = NSError(
+            completion(.failure(NSError(
                 domain: "SkinTypeClassifier",
                 code: 404,
                 userInfo: [NSLocalizedDescriptionKey: "Model not loaded"]
-            )
-            completion(.failure(error))
+            )))
             return
         }
-        
+
         guard let inputMultiArray = MLImageProcessor.makeMultiArray(from: image) else {
-            let error = NSError(
+            completion(.failure(NSError(
                 domain: "SkinTypeClassifier",
                 code: 400,
                 userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to multi-array input"]
-            )
-            completion(.failure(error))
+            )))
             return
         }
-        
+
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                let output = try classifier.prediction(input: inputMultiArray)
-                let result = self.processPrediction(output.output)
+                // Use the underlying MLModel.prediction(from:) which accepts any MLFeatureProvider,
+                // bypassing the generated wrapper that only accepts SkinTypeClassifierInput.
+                let featureProvider = try MLDictionaryFeatureProvider(
+                    dictionary: ["input": MLFeatureValue(multiArray: inputMultiArray)]
+                )
+                let outputProvider = try classifier.model.prediction(from: featureProvider)
+                guard let outputMultiArray = outputProvider.featureValue(for: "output")?.multiArrayValue else {
+                    throw NSError(
+                        domain: "SkinTypeClassifier",
+                        code: 500,
+                        userInfo: [NSLocalizedDescriptionKey: "Model output 'output' missing or wrong type"]
+                    )
+                }
+                let result = self.processPrediction(outputMultiArray)
                 completion(.success(result))
             } catch {
                 completion(.failure(error))
             }
         }
     }
-    
+
     private func processPrediction(_ output: MLMultiArray) -> Output {
+        guard output.count >= 3 else {
+            print("SkinTypeClassifier: unexpected output count \(output.count), expected 3")
+            return (type: "normal", confidence: 0.0)
+        }
+
         var values = [Float]()
         for i in 0..<3 {
-            let index = [0, i] as [NSNumber]
-            values.append(output[index].floatValue)
+            values.append(output[i].floatValue)
         }
-        
+
         let probabilities = softmax(values)
         let labels = ["dry", "normal", "oily"]
-        
+
         let maxIndex = probabilities.enumerated().max(by: { $0.element < $1.element })?.offset ?? 1
-        let type = labels[maxIndex]
-        let confidence = Double(probabilities[maxIndex])
-        
-        return (type: type, confidence: confidence)
+        return (type: labels[maxIndex], confidence: Double(probabilities[maxIndex]))
     }
-    
+
     private func softmax(_ values: [Float]) -> [Float] {
         let maxVal = values.max() ?? 0.0
         let exps = values.map { exp($0 - maxVal) }
