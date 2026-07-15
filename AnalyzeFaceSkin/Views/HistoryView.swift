@@ -10,6 +10,7 @@ import SwiftData
 
 struct HistoryView: View {
     @Query(sort: \SkinAnalysisHistory.createdAt, order: .reverse) private var histories: [SkinAnalysisHistory]
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -22,18 +23,28 @@ struct HistoryView: View {
                 if histories.isEmpty {
                     emptyState
                 } else {
-                    ScrollView(.vertical, showsIndicators: false) {
-                        LazyVStack(spacing: 12) {
-                            ForEach(histories) { history in
-                                HistoryCard(history: history)
-                            }
+                    List {
+                        ForEach(histories) { history in
+                            HistoryCard(history: history)
+                                .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 16)
+                        .onDelete(perform: deleteHistory)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
         }
+    }
+
+    private func deleteHistory(at offsets: IndexSet) {
+        for index in offsets {
+            let history = histories[index]
+            modelContext.delete(history)
+        }
+        try? modelContext.save()
     }
 
     private var headerView: some View {

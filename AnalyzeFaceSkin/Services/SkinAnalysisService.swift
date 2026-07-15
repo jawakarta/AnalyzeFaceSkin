@@ -46,10 +46,6 @@ class SkinAnalysisService {
                         acneConfidence:    conditionData?.acne.confidence,
                         acneBoundingBoxes: conditionData?.acne.boundingBoxes ?? [],
 
-                        poreLevel:         conditionData?.pores.level,
-                        poreConfidence:    conditionData?.pores.confidence,
-                        poreBoundingBoxes: conditionData?.pores.boundingBoxes ?? [],
-
                         wrinkleLevel:         conditionData?.wrinkles.level,
                         wrinkleConfidence:    conditionData?.wrinkles.confidence,
                         wrinkleBoundingBoxes: conditionData?.wrinkles.boundingBoxes ?? []

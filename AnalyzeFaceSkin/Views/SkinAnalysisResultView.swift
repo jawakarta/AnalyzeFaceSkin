@@ -12,13 +12,11 @@ import SwiftData
 
 private enum ConditionLayer: String, CaseIterable {
     case acne     = "Acne"
-    case pores    = "Pores"
     case wrinkles = "Wrinkles"
 
     var color: Color {
         switch self {
         case .acne:     return .red
-        case .pores:    return Color(red: 0.2, green: 0.85, blue: 0.4)
         case .wrinkles: return Color(red: 0.4, green: 0.65, blue: 1.0)
         }
     }
@@ -26,7 +24,6 @@ private enum ConditionLayer: String, CaseIterable {
     var icon: String {
         switch self {
         case .acne:     return "allergens"
-        case .pores:    return "circle.dotted"
         case .wrinkles: return "waveform.path"
         }
     }
@@ -39,6 +36,7 @@ struct SkinAnalysisResultView: View {
     let result: SkinAnalysisResult
     let onDone: () -> Void
 
+    @Environment(\.modelContext) private var modelContext
     @State private var visibleLayers: Set<ConditionLayer> = Set(ConditionLayer.allCases)
 
     var body: some View {
@@ -50,15 +48,12 @@ struct SkinAnalysisResultView: View {
 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 24) {
-                        // ── Annotated face image ──────────────────────
                         annotatedImageSection
                             .padding(.horizontal, 20)
 
-                        // ── Layer toggles ─────────────────────────────
                         layerToggleRow
                             .padding(.horizontal, 20)
 
-                        // ── Skin type + condition cards ───────────────
                         VStack(spacing: 16) {
                             skinTypeCard
                             conditionsSection
@@ -100,13 +95,11 @@ struct SkinAnalysisResultView: View {
     private var annotatedImageSection: some View {
         GeometryReader { geo in
             let w = geo.size.width
-            // Maintain the image's original aspect ratio
             let imgSize = image.size
             let ratio   = imgSize.height / max(imgSize.width, 1)
             let h       = w * ratio
 
             ZStack(alignment: .topLeading) {
-                // Base face image
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
@@ -116,7 +109,6 @@ struct SkinAnalysisResultView: View {
                             .stroke(Color.white.opacity(0.12), lineWidth: 1)
                     )
 
-                // Bounding boxes per condition layer
                 ForEach(ConditionLayer.allCases, id: \.self) { layer in
                     if visibleLayers.contains(layer) {
                         let boxes = boundingBoxes(for: layer)
@@ -134,7 +126,6 @@ struct SkinAnalysisResultView: View {
             }
             .frame(width: w, height: h)
         }
-        // Dynamic height: let GeometryReader know the height it should occupy
         .aspectRatio(image.size.width / max(image.size.height, 1), contentMode: .fit)
         .shadow(color: Color.cyan.opacity(0.15), radius: 12)
     }
@@ -221,18 +212,14 @@ struct SkinAnalysisResultView: View {
                 layer: .acne,
                 count: result.acneBoundingBoxes.count,
                 level: result.acneLevel,
+                confidence: result.acneConfidence,
                 description: "Inflammatory lesions or comedones detected on skin surface."
-            )
-            conditionRow(
-                layer: .pores,
-                count: result.poreBoundingBoxes.count,
-                level: result.poreLevel,
-                description: "Enlarged pore regions often linked to excess sebum."
             )
             conditionRow(
                 layer: .wrinkles,
                 count: result.wrinkleBoundingBoxes.count,
                 level: result.wrinkleLevel,
+                confidence: result.wrinkleConfidence,
                 description: "Fine lines and wrinkle patterns from skin texture analysis."
             )
         }
@@ -243,13 +230,13 @@ struct SkinAnalysisResultView: View {
         layer: ConditionLayer,
         count: Int,
         level: String?,
+        confidence: Double?,
         description: String
     ) -> some View {
         let levelText = level ?? "Unknown"
 
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                // Color swatch matching overlay color
                 RoundedRectangle(cornerRadius: 3)
                     .fill(layer.color)
                     .frame(width: 4, height: 24)
@@ -263,7 +250,6 @@ struct SkinAnalysisResultView: View {
                     .foregroundColor(.white)
                     .bold()
 
-                // Region count badge
                 if count > 0 {
                     Text("\(count) region\(count > 1 ? "s" : "")")
                         .font(.system(size: 10, weight: .medium, design: .monospaced))
@@ -276,7 +262,13 @@ struct SkinAnalysisResultView: View {
 
                 Spacer()
 
-                // Severity badge only
+                if let conf = confidence {
+                    Text(String(format: "%.0f%%", conf * 100))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.6))
+                        .bold()
+                }
+
                 Text(levelText.uppercased())
                     .font(.system(size: 10, weight: .bold, design: .monospaced))
                     .foregroundColor(badgeColor(for: levelText))
@@ -308,7 +300,7 @@ struct SkinAnalysisResultView: View {
             saveToHistory()
             onDone()
         } label: {
-            Text("Done")
+            Text("Back to home")
                 .font(.system(.headline, design: .rounded))
                 .bold()
                 .foregroundColor(.black)
@@ -322,6 +314,8 @@ struct SkinAnalysisResultView: View {
         }
     }
 
+    // MARK: - Save to history
+
     private func saveToHistory() {
         guard let skinType = result.skinType else { return }
         let imageData = image.jpegData(compressionQuality: 0.6)
@@ -333,7 +327,24 @@ struct SkinAnalysisResultView: View {
         modelContext.insert(history)
         try? modelContext.save()
     }
-    
+
+    // MARK: - Helpers
+
+    private func boundingBoxes(for layer: ConditionLayer) -> [SkinBoundingBox] {
+        switch layer {
+        case .acne:     return result.acneBoundingBoxes
+        case .wrinkles: return result.wrinkleBoundingBoxes
+        }
+    }
+
+    private func badgeColor(for level: String) -> Color {
+        switch level.lowercased() {
+        case "severe", "high":   return .red
+        case "moderate": return .orange
+        default:         return .green
+        }
+    }
+
     private func descriptionForType(_ type: String) -> String {
         switch type.lowercased() {
         case "oily":    return "Excess sebum makes skin shiny, especially in T-zone. Pores may be enlarged."
@@ -347,10 +358,10 @@ struct SkinAnalysisResultView: View {
 // MARK: - Bounding Box Overlay View
 
 private struct BoundingBoxView: View {
-    let rect:      CGRect   // normalized 0..1
+    let rect:      CGRect
     let color:     Color
     let label:     String
-    let imageSize: CGSize   // actual rendered size of image in points
+    let imageSize: CGSize
 
     private var pixelRect: CGRect {
         CGRect(
@@ -363,15 +374,12 @@ private struct BoundingBoxView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // Filled semi-transparent background
             color.opacity(0.12)
                 .frame(width: pixelRect.width, height: pixelRect.height)
 
-            // Border
             RoundedRectangle(cornerRadius: 4)
                 .stroke(color, lineWidth: 1.5)
                 .frame(width: pixelRect.width, height: pixelRect.height)
-                // Animated dashed appearance
                 .overlay(
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(color.opacity(0.4), style: StrokeStyle(
@@ -380,7 +388,6 @@ private struct BoundingBoxView: View {
                         ))
                 )
 
-            // Label tag
             Text(label)
                 .font(.system(size: 8, weight: .bold, design: .monospaced))
                 .foregroundColor(.black)
@@ -410,11 +417,6 @@ private struct BoundingBoxView: View {
             acneBoundingBoxes: [
                 SkinBoundingBox(x: 0.15, y: 0.25, width: 0.18, height: 0.14),
                 SkinBoundingBox(x: 0.60, y: 0.30, width: 0.12, height: 0.10)
-            ],
-            poreLevel: "severe",
-            poreConfidence: 0.88,
-            poreBoundingBoxes: [
-                SkinBoundingBox(x: 0.30, y: 0.35, width: 0.40, height: 0.30)
             ],
             wrinkleLevel: "low",
             wrinkleConfidence: 0.91,

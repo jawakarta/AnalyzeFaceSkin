@@ -34,10 +34,6 @@ struct SkinAnalysisResult: Codable, Equatable {
     let acneConfidence: Double?
     let acneBoundingBoxes: [SkinBoundingBox]
 
-    let poreLevel:      String?
-    let poreConfidence: Double?
-    let poreBoundingBoxes: [SkinBoundingBox]
-
     let wrinkleLevel:      String?
     let wrinkleConfidence: Double?
     let wrinkleBoundingBoxes: [SkinBoundingBox]

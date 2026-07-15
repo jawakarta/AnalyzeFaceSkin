@@ -48,7 +48,6 @@ class AcneWrinkleDetectionService {
 
     struct DetectionResult {
         let acne:     ConditionScore
-        let pores:    ConditionScore
         let wrinkles: ConditionScore
     }
 
@@ -132,16 +131,14 @@ class AcneWrinkleDetectionService {
         let cellH = max(1, height / gridN)
 
         var rGrid = [[Bool]](repeating: [Bool](repeating: false, count: gridN), count: gridN)
-        var gGrid = [[Bool]](repeating: [Bool](repeating: false, count: gridN), count: gridN)
         var bGrid = [[Bool]](repeating: [Bool](repeating: false, count: gridN), count: gridN)
 
         var rTotal: Double = 0
-        var gTotal: Double = 0
         var bTotal: Double = 0
 
         for gy in 0..<gridN {
             for gx in 0..<gridN {
-                var rSum = 0, gSum = 0, bSum = 0, count = 0
+                var rSum = 0, bSum = 0, count = 0
                 let yStart = gy * cellH
                 let xStart = gx * cellW
                 let yEnd   = min(yStart + cellH, height)
@@ -150,14 +147,12 @@ class AcneWrinkleDetectionService {
                     for px in xStart..<xEnd {
                         let off = py * bytesPerRow + px * 4
                         rSum += Int(buf[off + rOff])
-                        gSum += Int(buf[off + gOff])
                         bSum += Int(buf[off + bOff])
                         count += 1
                     }
                 }
                 if count > 0 {
                     rGrid[gy][gx] = rSum / count > threshold
-                    gGrid[gy][gx] = gSum / count > threshold
                     bGrid[gy][gx] = bSum / count > threshold
                 }
             }
@@ -168,22 +163,18 @@ class AcneWrinkleDetectionService {
             for x in 0..<width {
                 let off = y * bytesPerRow + x * 4
                 rTotal += Double(buf[off + rOff])
-                gTotal += Double(buf[off + gOff])
                 bTotal += Double(buf[off + bOff])
             }
         }
         let acneDensity    = rTotal / Double(totalPx)
-        let poreDensity    = gTotal / Double(totalPx)
         let wrinkleDensity = bTotal / Double(totalPx)
 
         // ── Extract bounding boxes via connected components ────────────────────
         let acneBBoxes    = connectedComponents(grid: rGrid, gridN: gridN)
-        let poreBBoxes    = connectedComponents(grid: gGrid, gridN: gridN)
         let wrinkleBBoxes = connectedComponents(grid: bGrid, gridN: gridN)
 
         return DetectionResult(
             acne:     makeScore(density: acneDensity,    boxes: acneBBoxes),
-            pores:    makeScore(density: poreDensity,    boxes: poreBBoxes),
             wrinkles: makeScore(density: wrinkleDensity, boxes: wrinkleBBoxes)
         )
     }
@@ -242,14 +233,22 @@ class AcneWrinkleDetectionService {
         let normalized = density / 255.0
         let level: String
         let confidence: Double
-        switch normalized {
-        case 0..<0.05:
-            level = "low";      confidence = max(0, 1.0 - normalized / 0.05)
-        case 0.05..<0.20:
-            level = "moderate"; confidence = 0.6 + (normalized - 0.05) / 0.15 * 0.3
-        default:
-            level = "severe";   confidence = min(1.0, 0.7 + (normalized - 0.20) / 0.80 * 0.3)
+        
+        if normalized < 0.05 {
+            level = "low"
+            // Map 0...0.05 to 0%...35%
+            confidence = (normalized / 0.05) * 0.35
+        } else if normalized < 0.20 {
+            level = "moderate"
+            // Map 0.05...0.20 to 35%...70%
+            confidence = 0.35 + ((normalized - 0.05) / 0.15) * 0.35
+        } else {
+            level = "high"
+            // Map 0.20...0.50+ to 70%...100%
+            let progress = (normalized - 0.20) / 0.30
+            confidence = 0.70 + min(0.30, progress * 0.30)
         }
+        
         return ConditionScore(
             level: level,
             confidence: max(0, min(1, confidence)),
@@ -260,6 +259,6 @@ class AcneWrinkleDetectionService {
 
     private func defaultResult() -> DetectionResult {
         let s = ConditionScore(level: "low", confidence: 0.5, density: 0, boundingBoxes: [])
-        return DetectionResult(acne: s, pores: s, wrinkles: s)
+        return DetectionResult(acne: s, wrinkles: s)
     }
 }

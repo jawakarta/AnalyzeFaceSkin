@@ -30,7 +30,7 @@ struct HomeView: View {
                         .frame(width: 60, height: 60)
                         .foregroundStyle(.white)
 
-                    Text("AnalyzeFaceSkin")
+                    Text("SKIN°82")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                 }
