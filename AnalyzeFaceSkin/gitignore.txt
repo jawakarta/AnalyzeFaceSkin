@@ -1,0 +1,78 @@
+# Xcode
+#
+# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
+
+## User settings
+xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+
+## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+
+## Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+## CocoaPods
+Pods/
+
+## Carthage
+Carthage/Build/
+
+## Accio dependency management
+Dependencies/
+.accio/
+
+## fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+## Code Injection
+iOSInjectionProject/
+
+## macOS
+.DS_Store
+
+## Archives
+*.xcarchive
+
+## App packaging
+*.ipa
+
+## Firebase
+GoogleService-Info.plist
+
+## Secrets / Env
+.env
+.env.local
+Secrets.plist
+
+## Logs
+*.log
+
+## Temporary files
+*.swp
+*.tmp
+
+## Xcode Cloud
+ci_scripts/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
+## Build folders
+build/
+DerivedData/
+
+## Swift Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+## API Keys
+apikeys.plist
+config.plist
