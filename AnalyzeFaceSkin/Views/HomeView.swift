@@ -63,10 +63,8 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showScanning) {
             ContentView()
         }
-        .sheet(isPresented: $showHistory) {
-            Text("History - Coming Soon")
-                .font(.title2)
-                .presentationDetents([.medium])
+        .fullScreenCover(isPresented: $showHistory) {
+            HistoryView()
         }
     }
 }

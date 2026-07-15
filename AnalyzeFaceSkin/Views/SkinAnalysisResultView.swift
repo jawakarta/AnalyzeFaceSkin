@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 // MARK: - Condition toggle state
 
@@ -303,7 +304,10 @@ struct SkinAnalysisResultView: View {
     // MARK: - Done button
 
     private var doneButton: some View {
-        Button(action: onDone) {
+        Button {
+            saveToHistory()
+            onDone()
+        } label: {
             Text("Done")
                 .font(.system(.headline, design: .rounded))
                 .bold()
@@ -318,24 +322,18 @@ struct SkinAnalysisResultView: View {
         }
     }
 
-    // MARK: - Helpers
-
-    private func boundingBoxes(for layer: ConditionLayer) -> [SkinBoundingBox] {
-        switch layer {
-        case .acne:     return result.acneBoundingBoxes
-        case .pores:    return result.poreBoundingBoxes
-        case .wrinkles: return result.wrinkleBoundingBoxes
-        }
+    private func saveToHistory() {
+        guard let skinType = result.skinType else { return }
+        let imageData = image.jpegData(compressionQuality: 0.6)
+        let history = SkinAnalysisHistory(
+            skinType: skinType,
+            skinTypeConfidence: result.skinTypeConfidence ?? 0,
+            imageData: imageData
+        )
+        modelContext.insert(history)
+        try? modelContext.save()
     }
-
-    private func badgeColor(for level: String) -> Color {
-        switch level.lowercased() {
-        case "severe":   return .red
-        case "moderate": return .orange
-        default:         return .green
-        }
-    }
-
+    
     private func descriptionForType(_ type: String) -> String {
         switch type.lowercased() {
         case "oily":    return "Excess sebum makes skin shiny, especially in T-zone. Pores may be enlarged."
