@@ -10,33 +10,18 @@ import SwiftUI
 struct CaptureControlsView: View {
     let onCapture: () -> Void
     let onGallery: () -> Void
-    let onSettings: () -> Void
-    let onFlash: (() -> Void)?
-    let isFlashOn: Bool
-    let showFlash: Bool
 
     var isCaptureDisabled: Bool = false
 
     var body: some View {
-        HStack(spacing: 60) {
-            if showFlash {
-                flashButton
-            } else {
-                galleryButton
-            }
+        HStack(spacing: 40) {
+            galleryButton
+            
             captureButton
-            settingsButton
-        }
-    }
-
-    private var flashButton: some View {
-        Button(action: { onFlash?() }) {
-            Image(systemName: isFlashOn ? "bolt.fill" : "bolt.slash.fill")
-                .font(.title2)
-                .foregroundColor(isFlashOn ? .yellow : .white)
+            
+            // Invisible placeholder to keep the capture button perfectly centered
+            Color.clear
                 .frame(width: 50, height: 50)
-                .background(Color.black.opacity(0.5))
-                .clipShape(Circle())
         }
     }
 
@@ -64,16 +49,5 @@ struct CaptureControlsView: View {
         }
         .disabled(isCaptureDisabled)
         .opacity(isCaptureDisabled ? 0.4 : 1.0)
-    }
-
-    private var settingsButton: some View {
-        Button(action: onSettings) {
-            Image(systemName: "gearshape")
-                .font(.title2)
-                .foregroundColor(.white)
-                .frame(width: 50, height: 50)
-                .background(Color.black.opacity(0.5))
-                .clipShape(Circle())
-        }
     }
 }

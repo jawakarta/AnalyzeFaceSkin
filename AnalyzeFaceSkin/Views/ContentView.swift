@@ -165,10 +165,6 @@ struct ContentView: View {
                 CaptureControlsView(
                     onCapture: { viewModel.capturePhoto() },
                     onGallery: { showPhotoPicker = true },
-                    onSettings: {},
-                    onFlash: { viewModel.toggleFlash() },
-                    isFlashOn: viewModel.isFlashOn,
-                    showFlash: viewModel.lightingCondition == .lowLight,
                     isCaptureDisabled: !viewModel.faceState.isDetected
                 )
                 .padding(.bottom, 40)
