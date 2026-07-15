@@ -9,17 +9,16 @@ import UIKit
 import CoreML
 import Vision
 
-/// Detects acne, pores, and wrinkles using `SkinConditionSegmenter`.
+/// Detects acne and wrinkles using `SkinConditionSegmenter`.
 ///
 /// The model outputs a 512×512 segmentation mask where:
 ///   - Red   channel → Acne    regions
-///   - Green channel → Pore    regions
 ///   - Blue  channel → Wrinkle regions
 ///
 /// Each channel is analysed to produce:
-///   - A severity level  (low / moderate / severe)
-///   - A confidence score
-///   - A list of normalized bounding boxes (0..1) so the UI can draw overlays
+///   - A severity level  (low / moderate / high)
+///   - A confidence score (average of detected bounding box confidences)
+///   - A list of normalized bounding boxes with individual confidences
 class AcneWrinkleDetectionService {
 
     // MARK: - Model
@@ -40,8 +39,8 @@ class AcneWrinkleDetectionService {
     // MARK: - Public types
 
     struct ConditionScore {
-        let level:        String           // "low" | "moderate" | "severe"
-        let confidence:   Double           // 0..1
+        let level:        String
+        let confidence:   Double           // average of detected bounding box confidences (0..1)
         let density:      Double           // mean intensity (0–255) for debugging
         let boundingBoxes: [SkinBoundingBox]
     }
@@ -108,15 +107,14 @@ class AcneWrinkleDetectionService {
 
         // Channel byte-offsets depend on pixel format
         let rOff: Int
-        let gOff: Int
         let bOff: Int
         switch format {
         case kCVPixelFormatType_32BGRA:
-            bOff = 0; gOff = 1; rOff = 2
+            bOff = 0; rOff = 2
         case kCVPixelFormatType_32RGBA:
-            rOff = 0; gOff = 1; bOff = 2
+            rOff = 0; bOff = 2
         case kCVPixelFormatType_32ARGB:
-            rOff = 1; gOff = 2; bOff = 3
+            rOff = 1; bOff = 3
         default:
             return defaultResult()
         }
@@ -125,7 +123,6 @@ class AcneWrinkleDetectionService {
         let threshold: Int = 30
 
         // ── Build 64×64 activation grids ──────────────────────────────────────
-        // Downsampling reduces noise and speeds up connected-component analysis.
         let gridN = 64
         let cellW = max(1, width  / gridN)
         let cellH = max(1, height / gridN)
@@ -170,13 +167,73 @@ class AcneWrinkleDetectionService {
         let wrinkleDensity = bTotal / Double(totalPx)
 
         // ── Extract bounding boxes via connected components ────────────────────
-        let acneBBoxes    = connectedComponents(grid: rGrid, gridN: gridN)
-        let wrinkleBBoxes = connectedComponents(grid: bGrid, gridN: gridN)
+        let rawAcneBBoxes    = connectedComponents(grid: rGrid, gridN: gridN)
+        let rawWrinkleBBoxes = connectedComponents(grid: bGrid, gridN: gridN)
+
+        // Calculate actual confidence for each individual box by querying the raw mask buffer
+        print("====== SKIN SCAN ANALYSIS LOG ======")
+        print("--- ACNE DETECTIONS ---")
+        let acneBBoxes = rawAcneBBoxes.enumerated().map { (index, box) -> SkinBoundingBox in
+            let intensity = self.averageIntensity(in: box, width: width, height: height, bytesPerRow: bytesPerRow, buf: buf, channelOff: rOff)
+            let conf = max(0.3, min(1.0, intensity / 255.0))
+            print("Acne Box \(index + 1): x=\(String(format: "%.2f", box.x)), y=\(String(format: "%.2f", box.y)), width=\(String(format: "%.2f", box.width)), height=\(String(format: "%.2f", box.height)) | avgIntensity=\(String(format: "%.1f", intensity)) | confidence=\(String(format: "%.0f%%", conf * 100))")
+            return SkinBoundingBox(x: box.x, y: box.y, width: box.width, height: box.height, confidence: conf)
+        }
+
+        print("--- WRINKLE DETECTIONS ---")
+        let wrinkleBBoxes = rawWrinkleBBoxes.enumerated().map { (index, box) -> SkinBoundingBox in
+            let intensity = self.averageIntensity(in: box, width: width, height: height, bytesPerRow: bytesPerRow, buf: buf, channelOff: bOff)
+            let conf = max(0.3, min(1.0, intensity / 255.0))
+            print("Wrinkle Box \(index + 1): x=\(String(format: "%.2f", box.x)), y=\(String(format: "%.2f", box.y)), width=\(String(format: "%.2f", box.width)), height=\(String(format: "%.2f", box.height)) | avgIntensity=\(String(format: "%.1f", intensity)) | confidence=\(String(format: "%.0f%%", conf * 100))")
+            return SkinBoundingBox(x: box.x, y: box.y, width: box.width, height: box.height, confidence: conf)
+        }
+
+        // Overall confidence is the average of all bounding boxes' individual confidences
+        let avgAcneConf = acneBBoxes.isEmpty
+            ? 0.0
+            : acneBBoxes.reduce(0.0, { $0 + $1.confidence }) / Double(acneBBoxes.count)
+        print(">> Average Acne Confidence: \(String(format: "%.0f%%", avgAcneConf * 100)) (Total: \(acneBBoxes.count) regions)")
+
+        let avgWrinkleConf = wrinkleBBoxes.isEmpty
+            ? 0.0
+            : wrinkleBBoxes.reduce(0.0, { $0 + $1.confidence }) / Double(wrinkleBBoxes.count)
+        print(">> Average Wrinkle Confidence: \(String(format: "%.0f%%", avgWrinkleConf * 100)) (Total: \(wrinkleBBoxes.count) regions)")
+        print("====================================")
 
         return DetectionResult(
-            acne:     makeScore(density: acneDensity,    boxes: acneBBoxes),
-            wrinkles: makeScore(density: wrinkleDensity, boxes: wrinkleBBoxes)
+            acne:     makeScore(density: acneDensity,    boxes: acneBBoxes,    avgBoxConf: avgAcneConf),
+            wrinkles: makeScore(density: wrinkleDensity, boxes: wrinkleBBoxes, avgBoxConf: avgWrinkleConf)
         )
+    }
+
+    // MARK: - Helper to calculate average intensity inside a normalized bounding box
+
+    private func averageIntensity(
+        in rect: SkinBoundingBox,
+        width: Int,
+        height: Int,
+        bytesPerRow: Int,
+        buf: UnsafePointer<UInt8>,
+        channelOff: Int
+    ) -> Double {
+        let xStart = max(0, Int(rect.x * Double(width)))
+        let yStart = max(0, Int(rect.y * Double(height)))
+        let xEnd   = min(width, xStart + max(1, Int(rect.width * Double(width))))
+        let yEnd   = min(height, yStart + max(1, Int(rect.height * Double(height))))
+
+        var sum = 0
+        var count = 0
+
+        for y in yStart..<yEnd {
+            for x in xStart..<xEnd {
+                let off = y * bytesPerRow + x * 4
+                sum += Int(buf[off + channelOff])
+                count += 1
+            }
+        }
+
+        guard count > 0 else { return 0.0 }
+        return Double(sum) / Double(count)
     }
 
     // MARK: - Connected-component analysis (BFS on NxN grid)
@@ -221,7 +278,8 @@ class AcneWrinkleDetectionService {
                 let y1 = min(1.0, Double(maxY + 1) / Double(gridN) + pad)
 
                 boxes.append(SkinBoundingBox(x: x0, y: y0,
-                                             width: x1 - x0, height: y1 - y0))
+                                             width: x1 - x0, height: y1 - y0,
+                                             confidence: 0.0))
             }
         }
         return boxes
@@ -229,29 +287,21 @@ class AcneWrinkleDetectionService {
 
     // MARK: - Severity scoring
 
-    private func makeScore(density: Double, boxes: [SkinBoundingBox]) -> ConditionScore {
+    private func makeScore(density: Double, boxes: [SkinBoundingBox], avgBoxConf: Double) -> ConditionScore {
         let normalized = density / 255.0
         let level: String
-        let confidence: Double
         
         if normalized < 0.05 {
             level = "low"
-            // Map 0...0.05 to 0%...35%
-            confidence = (normalized / 0.05) * 0.35
         } else if normalized < 0.20 {
             level = "moderate"
-            // Map 0.05...0.20 to 35%...70%
-            confidence = 0.35 + ((normalized - 0.05) / 0.15) * 0.35
         } else {
             level = "high"
-            // Map 0.20...0.50+ to 70%...100%
-            let progress = (normalized - 0.20) / 0.30
-            confidence = 0.70 + min(0.30, progress * 0.30)
         }
         
         return ConditionScore(
             level: level,
-            confidence: max(0, min(1, confidence)),
+            confidence: avgBoxConf,
             density: density,
             boundingBoxes: boxes
         )

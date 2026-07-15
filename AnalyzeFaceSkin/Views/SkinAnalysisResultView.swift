@@ -133,28 +133,40 @@ struct SkinAnalysisResultView: View {
     // MARK: - Layer toggle pills
 
     private var layerToggleRow: some View {
-        HStack(spacing: 10) {
+        let hasAcne = !result.acneBoundingBoxes.isEmpty
+        let hasWrinkles = !result.wrinkleBoundingBoxes.isEmpty
+
+        return HStack(spacing: 10) {
             ForEach(ConditionLayer.allCases, id: \.self) { layer in
-                let active = visibleLayers.contains(layer)
-                Button {
-                    if active { visibleLayers.remove(layer) }
-                    else      { visibleLayers.insert(layer) }
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: layer.icon)
-                            .font(.system(size: 11))
-                        Text(layer.rawValue)
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                let shouldShow: Bool = {
+                    switch layer {
+                    case .acne:     return hasAcne
+                    case .wrinkles: return hasWrinkles
                     }
-                    .foregroundColor(active ? .black : layer.color)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(active ? layer.color : layer.color.opacity(0.12))
-                    .cornerRadius(20)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(layer.color.opacity(active ? 0 : 0.5), lineWidth: 1)
-                    )
+                }()
+
+                if shouldShow {
+                    let active = visibleLayers.contains(layer)
+                    Button {
+                        if active { visibleLayers.remove(layer) }
+                        else      { visibleLayers.insert(layer) }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: layer.icon)
+                                .font(.system(size: 11))
+                            Text(layer.rawValue)
+                                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        }
+                        .foregroundColor(active ? .black : layer.color)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(active ? layer.color : layer.color.opacity(0.12))
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(layer.color.opacity(active ? 0 : 0.5), lineWidth: 1)
+                        )
+                    }
                 }
             }
         }
@@ -208,20 +220,54 @@ struct SkinAnalysisResultView: View {
                 .tracking(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            conditionRow(
-                layer: .acne,
-                count: result.acneBoundingBoxes.count,
-                level: result.acneLevel,
-                confidence: result.acneConfidence,
-                description: "Inflammatory lesions or comedones detected on skin surface."
-            )
-            conditionRow(
-                layer: .wrinkles,
-                count: result.wrinkleBoundingBoxes.count,
-                level: result.wrinkleLevel,
-                confidence: result.wrinkleConfidence,
-                description: "Fine lines and wrinkle patterns from skin texture analysis."
-            )
+            let hasAcne = !result.acneBoundingBoxes.isEmpty
+            let hasWrinkles = !result.wrinkleBoundingBoxes.isEmpty
+
+            if hasAcne {
+                conditionRow(
+                    layer: .acne,
+                    count: result.acneBoundingBoxes.count,
+                    level: result.acneLevel,
+                    confidence: result.acneConfidence,
+                    description: "Inflammatory lesions or comedones detected on skin surface."
+                )
+            }
+
+            if hasWrinkles {
+                conditionRow(
+                    layer: .wrinkles,
+                    count: result.wrinkleBoundingBoxes.count,
+                    level: result.wrinkleLevel,
+                    confidence: result.wrinkleConfidence,
+                    description: "Fine lines and wrinkle patterns from skin texture analysis."
+                )
+            }
+
+            if !hasAcne && !hasWrinkles {
+                HStack(spacing: 16) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundColor(.green)
+                        .font(.title2)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("All Clear!")
+                            .font(.system(.subheadline, design: .rounded))
+                            .bold()
+                            .foregroundColor(.white)
+                        
+                        Text("No significant acne or wrinkle patterns detected on your skin.")
+                            .font(.system(.caption))
+                            .foregroundColor(.white.opacity(0.5))
+                            .lineLimit(nil)
+                    }
+                    Spacer()
+                }
+                .padding()
+                .background(Color.white.opacity(0.04))
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.green.opacity(0.2), lineWidth: 1))
+            }
         }
     }
 
@@ -415,8 +461,8 @@ private struct BoundingBoxView: View {
             acneLevel: "moderate",
             acneConfidence: 0.72,
             acneBoundingBoxes: [
-                SkinBoundingBox(x: 0.15, y: 0.25, width: 0.18, height: 0.14),
-                SkinBoundingBox(x: 0.60, y: 0.30, width: 0.12, height: 0.10)
+                SkinBoundingBox(x: 0.15, y: 0.25, width: 0.18, height: 0.14, confidence: 0.75),
+                SkinBoundingBox(x: 0.60, y: 0.30, width: 0.12, height: 0.10, confidence: 0.69)
             ],
             wrinkleLevel: "low",
             wrinkleConfidence: 0.91,
