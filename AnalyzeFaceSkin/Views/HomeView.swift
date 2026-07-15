@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct HomeView: View {
+    @AppStorage("hasAcceptedAgreement") private var hasAcceptedAgreement = false
+    @State private var showAgreement = false
     @State private var showScanning = false
     @State private var showHistory = false
 
@@ -30,7 +32,7 @@ struct HomeView: View {
                         .frame(width: 60, height: 60)
                         .foregroundStyle(.white)
 
-                    Text("AnalyzeFaceSkin")
+                    Text("SKIN°82")
                         .font(.system(size: 26, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                 }
@@ -63,10 +65,16 @@ struct HomeView: View {
         .fullScreenCover(isPresented: $showScanning) {
             ContentView()
         }
-        .sheet(isPresented: $showHistory) {
-            Text("History - Coming Soon")
-                .font(.title2)
-                .presentationDetents([.medium])
+        .fullScreenCover(isPresented: $showHistory) {
+            HistoryView()
+        }
+        .fullScreenCover(isPresented: $showAgreement) {
+            AgreementView()
+        }
+        .onAppear {
+            if !hasAcceptedAgreement {
+                showAgreement = true
+            }
         }
     }
 }

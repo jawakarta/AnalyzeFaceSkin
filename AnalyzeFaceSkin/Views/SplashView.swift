@@ -27,7 +27,7 @@ struct SplashView: View {
                     .frame(width: 100, height: 100)
                     .foregroundStyle(.white)
 
-                Text("AnalyzeFaceSkin")
+                Text("SKIN°82")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
