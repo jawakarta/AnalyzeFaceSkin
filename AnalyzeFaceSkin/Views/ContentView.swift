@@ -122,10 +122,10 @@ struct ContentView: View {
         } message: {
             Text("Please grant camera access in Settings.")
         }
-        .alert("Wajah Tidak Terdeteksi", isPresented: $viewModel.showNoFaceAlert) {
+        .alert("Face Not Detected", isPresented: $viewModel.showNoFaceAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("Foto yang Anda pilih atau ambil tidak mendeteksi wajah dengan jelas. Silakan coba lagi dengan pencahayaan dan sudut yang lebih baik.")
+            Text("The photo you selected or took didn't clearly detect the face. Please try again with better lighting and angle.")
         }
         .alert("Analysis Failed", isPresented: $viewModel.showAnalysisErrorAlert) {
             Button("OK", role: .cancel) {}

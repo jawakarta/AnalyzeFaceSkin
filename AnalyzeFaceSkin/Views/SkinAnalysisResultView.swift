@@ -238,7 +238,7 @@ struct SkinAnalysisResultView: View {
                     layer: .acne,
                     count: result.acneBoundingBoxes.count,
                     level: result.acneLevel,
-                    confidence: result.acneConfidence,
+//                    confidence: result.acneConfidence,
                     description: "Inflammatory lesions or comedones detected on skin surface."
                 )
             }
@@ -248,7 +248,7 @@ struct SkinAnalysisResultView: View {
                     layer: .wrinkles,
                     count: result.wrinkleBoundingBoxes.count,
                     level: result.wrinkleLevel,
-                    confidence: result.wrinkleConfidence,
+//                    confidence: result.wrinkleConfidence,
                     description: "Fine lines and wrinkle patterns from skin texture analysis."
                 )
             }
@@ -287,7 +287,7 @@ struct SkinAnalysisResultView: View {
         layer: ConditionLayer,
         count: Int,
         level: String?,
-        confidence: Double?,
+//        confidence: Double?,
         description: String
     ) -> some View {
         let levelText = level ?? "Unknown"
@@ -319,12 +319,12 @@ struct SkinAnalysisResultView: View {
 
                 Spacer()
 
-                if let conf = confidence {
-                    Text(String(format: "%.0f%%", conf * 100))
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(Color(hex: "5E52B7"))
-                        .bold()
-                }
+//                if let conf = confidence {
+//                    Text(String(format: "%.0f%%", conf * 100))
+//                        .font(.system(.caption, design: .monospaced))
+//                        .foregroundColor(Color(hex: "5E52B7"))
+//                        .bold()
+//                }
 
                 Text(levelText.uppercased())
                     .font(.system(size: 10, weight: .bold, design: .monospaced))
