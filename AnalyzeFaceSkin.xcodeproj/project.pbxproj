@@ -260,9 +260,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QW3MXN77GK;
+				DEVELOPMENT_TEAM = QHT4972NT5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "SKIN°82";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Face Capture needs camera access to analyze your skin.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Face Capture saves photos to your library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Face Capture needs photo library access to import photos for skin analysis.";
@@ -296,9 +297,10 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = QW3MXN77GK;
+				DEVELOPMENT_TEAM = QHT4972NT5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "SKIN°82";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Face Capture needs camera access to analyze your skin.";
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Face Capture saves photos to your library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Face Capture needs photo library access to import photos for skin analysis.";
