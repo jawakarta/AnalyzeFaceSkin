@@ -106,6 +106,7 @@ struct ContentView: View {
             case .result(let image, let result):
                 SkinAnalysisResultView(image: image, result: result) {
                     viewModel.reset()
+                    dismiss()
                 }
             }
         }
