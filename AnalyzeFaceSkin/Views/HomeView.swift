@@ -6,60 +6,185 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct HomeView: View {
     @AppStorage("hasAcceptedAgreement") private var hasAcceptedAgreement = false
+    @Query(sort: \SkinAnalysisHistory.createdAt, order: .reverse) private var histories: [SkinAnalysisHistory]
+    
     @State private var showAgreement = false
     @State private var showScanning = false
     @State private var showHistory = false
+    
+    // Animation states for Scan Now button
+    @State private var pulseScale1 = 1.0
+    @State private var pulseOpacity1 = 0.5
+    @State private var pulseScale2 = 1.0
+    @State private var pulseOpacity2 = 0.3
+    @State private var pulseScale3 = 1.0
+    @State private var pulseOpacity3 = 0.1
+    
+    private var lastScanText: String {
+        guard let lastScan = histories.first else { return "N/A" }
+        let calendar = Calendar.current
+        if calendar.isDateInToday(lastScan.createdAt) {
+            return "Today"
+        } else if calendar.isDateInYesterday(lastScan.createdAt) {
+            return "Yesterday"
+        } else {
+            let diff = calendar.dateComponents([.day], from: lastScan.createdAt, to: Date()).day ?? 0
+            return "\(diff) days ago"
+        }
+    }
+    
+    private var avgScoreText: String {
+        guard !histories.isEmpty else { return "0/100" }
+        let total = histories.reduce(0.0) { $0 + $1.skinTypeConfidence }
+        let avg = Int((total / Double(histories.count)) * 100)
+        return "\(avg)/100"
+    }
 
     var body: some View {
         ZStack {
+            // Pastel warm peach to soft lavender gradient background
             LinearGradient(
-                colors: [Color(hex: "1B2A4A"), Color(hex: "2E4057")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [
+                    Color(hex: "F3B8A5"), // Soft Warm Peach
+                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
+                    Color(hex: "D7D3EA")  // Gentle Lavender
+                ],
+                startPoint: .top,
+                endPoint: .bottom
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 40) {
+            VStack(spacing: 0) {
+                // Header (Left Aligned)
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            Text("SKIN")
+                                .font(.system(size: 34, weight: .bold, design: .rounded))
+                                .foregroundColor(Color(hex: "3A2E2B"))
+                            Text("°82")
+                                .font(.system(size: 34, weight: .thin, design: .rounded))
+                                .foregroundColor(Color(hex: "3A2E2B"))
+                        }
+                        
+                        Text("SKIN INTELLIGENCE")
+                            .font(.system(size: 11, weight: .bold, design: .monospaced))
+                            .foregroundColor(Color(hex: "75635F"))
+                            .tracking(2)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+
                 Spacer()
 
-                VStack(spacing: 8) {
-                    Image(systemName: "face.smiling")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 60, height: 60)
-                        .foregroundStyle(.white)
+                // Centered Animating Scan Button Area
+                VStack(spacing: 32) {
+                    ZStack {
+                        // Outer Pulsing Ring 3
+                        Circle()
+                            .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
+                            .frame(width: 290, height: 290)
+                            .scaleEffect(pulseScale3)
+                            .opacity(pulseOpacity3)
+                        
+                        // Outer Pulsing Ring 2
+                        Circle()
+                            .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
+                            .frame(width: 250, height: 250)
+                            .scaleEffect(pulseScale2)
+                            .opacity(pulseOpacity2)
+                        
+                        // Outer Pulsing Ring 1
+                        Circle()
+                            .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
+                            .frame(width: 210, height: 210)
+                            .scaleEffect(pulseScale1)
+                            .opacity(pulseOpacity1)
 
-                    Text("SKIN°82")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        // Main Central Button
+                        Button {
+                            showScanning = true
+                        } label: {
+                            VStack(spacing: 12) {
+                                Image(systemName: "camera")
+                                    .font(.system(size: 38, weight: .light))
+                                    .foregroundColor(Color(hex: "5A4C47"))
+                                
+                                Text("SCAN NOW")
+                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .foregroundColor(Color(hex: "5A4C47"))
+                                    .tracking(1.5)
+                            }
+                            .frame(width: 176, height: 176)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .shadow(color: Color.black.opacity(0.06), radius: 15, x: 0, y: 8)
+                        }
+                    }
+                    .frame(width: 300, height: 300)
+
+                    // Description text below the button
+                    Text("Scan your face to analyze your facial skin condition")
+                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .foregroundColor(Color(hex: "6A5D58"))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
                 }
 
                 Spacer()
 
-                VStack(spacing: 24) {
-                    HomeButton(
-                        icon: "camera.viewfinder",
-                        title: "Scanning",
-                        subtitle: "Scan your face now"
-                    ) {
-                        showScanning = true
-                    }
-
-                    HomeButton(
-                        icon: "clock.arrow.circlepath",
-                        title: "History",
-                        subtitle: "View past results"
-                    ) {
-                        showHistory = true
-                    }
+                // Stats Dashboard Row (3 Cards)
+                HStack(spacing: 12) {
+                    statCard(value: lastScanText, label: "Last Scan")
+                    statCard(value: "\(histories.count)", label: "Total Scans")
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 16)
 
-                Spacer()
-                Spacer()
+                // Bottom History Card
+                Button {
+                    showHistory = true
+                } label: {
+                    HStack(spacing: 16) {
+                        // Clock Icon Container
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(hex: "ECEAF8"))
+                                .frame(width: 44, height: 44)
+                            
+                            Image(systemName: "clock")
+                                .font(.system(size: 20))
+                                .foregroundColor(Color(hex: "5E52B7"))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Scan History")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundColor(Color(hex: "3A2E2B"))
+                            Text("View past analyses")
+                                .font(.system(size: 13, weight: .regular, design: .rounded))
+                                .foregroundColor(Color(hex: "75635F"))
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(Color(hex: "A39A96"))
+                    }
+                    .padding(16)
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 4)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 24)
             }
         }
         .fullScreenCover(isPresented: $showScanning) {
@@ -75,42 +200,43 @@ struct HomeView: View {
             if !hasAcceptedAgreement {
                 showAgreement = true
             }
+            
+            // Start pulsing animations
+            withAnimation(Animation.easeOut(duration: 2.0).repeatForever(autoreverses: false)) {
+                pulseScale1 = 1.35
+                pulseOpacity1 = 0.0
+            }
+            
+            withAnimation(Animation.easeOut(duration: 2.0).delay(0.65).repeatForever(autoreverses: false)) {
+                pulseScale2 = 1.35
+                pulseOpacity2 = 0.0
+            }
         }
+    }
+
+    @ViewBuilder
+    private func statCard(value: String, label: String) -> some View {
+        VStack(spacing: 6) {
+            Text(value)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundColor(Color(hex: "3A2E2B"))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            
+            Text(label)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(Color(hex: "75635F"))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 8)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 4)
     }
 }
 
-struct HomeButton: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                Image(systemName: icon)
-                    .font(.system(size: 28))
-                    .foregroundStyle(.white)
-                    .frame(width: 50, height: 50)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                    Text(subtitle)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.4))
-            }
-            .padding(20)
-            .background(.white.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-        }
-    }
+#Preview {
+    HomeView()
+        .modelContainer(for: SkinAnalysisHistory.self, inMemory: true)
 }
