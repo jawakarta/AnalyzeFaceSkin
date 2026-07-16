@@ -41,7 +41,16 @@ struct SkinAnalysisResultView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            LinearGradient(
+                colors: [
+                    Color(hex: "F3B8A5"), // Soft Warm Peach
+                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
+                    Color(hex: "D7D3EA")  // Gentle Lavender
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 headerView
@@ -75,18 +84,18 @@ struct SkinAnalysisResultView: View {
         VStack(spacing: 4) {
             Text("ANALYSIS REPORT")
                 .font(.system(.caption, design: .monospaced))
-                .foregroundColor(.cyan)
+                .foregroundColor(Color(hex: "75635F"))
                 .bold()
                 .tracking(3)
             Text("Your Skin Health")
                 .font(.system(.title3, design: .rounded))
                 .bold()
-                .foregroundColor(.white)
+                .foregroundColor(Color(hex: "3A2E2B"))
         }
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(Color.white.opacity(0.03))
-        .overlay(Rectangle().fill(Color.white.opacity(0.1)).frame(height: 1),
+        .background(Color.white.opacity(0.15))
+        .overlay(Rectangle().fill(Color.black.opacity(0.06)).frame(height: 1),
                  alignment: .bottom)
     }
 
@@ -106,7 +115,7 @@ struct SkinAnalysisResultView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                            .stroke(Color.black.opacity(0.06), lineWidth: 1)
                     )
 
                 ForEach(ConditionLayer.allCases, id: \.self) { layer in
@@ -133,28 +142,40 @@ struct SkinAnalysisResultView: View {
     // MARK: - Layer toggle pills
 
     private var layerToggleRow: some View {
-        HStack(spacing: 10) {
+        let hasAcne = !result.acneBoundingBoxes.isEmpty
+        let hasWrinkles = !result.wrinkleBoundingBoxes.isEmpty
+
+        return HStack(spacing: 10) {
             ForEach(ConditionLayer.allCases, id: \.self) { layer in
-                let active = visibleLayers.contains(layer)
-                Button {
-                    if active { visibleLayers.remove(layer) }
-                    else      { visibleLayers.insert(layer) }
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: layer.icon)
-                            .font(.system(size: 11))
-                        Text(layer.rawValue)
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                let shouldShow: Bool = {
+                    switch layer {
+                    case .acne:     return hasAcne
+                    case .wrinkles: return hasWrinkles
                     }
-                    .foregroundColor(active ? .black : layer.color)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(active ? layer.color : layer.color.opacity(0.12))
-                    .cornerRadius(20)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(layer.color.opacity(active ? 0 : 0.5), lineWidth: 1)
-                    )
+                }()
+
+                if shouldShow {
+                    let active = visibleLayers.contains(layer)
+                    Button {
+                        if active { visibleLayers.remove(layer) }
+                        else      { visibleLayers.insert(layer) }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: layer.icon)
+                                .font(.system(size: 11))
+                            Text(layer.rawValue)
+                                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        }
+                        .foregroundColor(active ? .black : layer.color)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(active ? layer.color : layer.color.opacity(0.08))
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(layer.color.opacity(active ? 0 : 0.4), lineWidth: 1)
+                        )
+                    }
                 }
             }
         }
@@ -168,13 +189,13 @@ struct SkinAnalysisResultView: View {
             HStack {
                 Label("Skin Type", systemImage: "drop.fill")
                     .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(.cyan)
+                    .foregroundColor(Color(hex: "5E52B7"))
                     .bold()
                 Spacer()
                 if let conf = result.skinTypeConfidence {
                     Text(String(format: "%.0f%% Match", conf * 100))
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.pink)
+                        .foregroundColor(Color(hex: "E95B82"))
                         .bold()
                 }
             }
@@ -183,18 +204,19 @@ struct SkinAnalysisResultView: View {
             Text(type.capitalized)
                 .font(.system(.title2, design: .rounded))
                 .bold()
-                .foregroundColor(.white)
+                .foregroundColor(Color(hex: "3A2E2B"))
 
             Text(descriptionForType(type))
-                .font(.system(.footnote))
-                .foregroundColor(.white.opacity(0.7))
+                .font(.system(.footnote, design: .rounded))
+                .foregroundColor(Color(hex: "75635F"))
                 .lineLimit(nil)
         }
         .padding()
-        .background(Color.white.opacity(0.05))
+        .background(Color.white)
         .cornerRadius(16)
         .overlay(RoundedRectangle(cornerRadius: 16)
-            .stroke(Color.cyan.opacity(0.25), lineWidth: 1))
+            .stroke(Color.white.opacity(0.8), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
     }
 
     // MARK: - Conditions section
@@ -203,25 +225,60 @@ struct SkinAnalysisResultView: View {
         VStack(spacing: 12) {
             Text("CONDITION SCAN")
                 .font(.system(.caption, design: .monospaced))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Color(hex: "75635F"))
                 .bold()
                 .tracking(2)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            conditionRow(
-                layer: .acne,
-                count: result.acneBoundingBoxes.count,
-                level: result.acneLevel,
-                confidence: result.acneConfidence,
-                description: "Inflammatory lesions or comedones detected on skin surface."
-            )
-            conditionRow(
-                layer: .wrinkles,
-                count: result.wrinkleBoundingBoxes.count,
-                level: result.wrinkleLevel,
-                confidence: result.wrinkleConfidence,
-                description: "Fine lines and wrinkle patterns from skin texture analysis."
-            )
+            let hasAcne = !result.acneBoundingBoxes.isEmpty
+            let hasWrinkles = !result.wrinkleBoundingBoxes.isEmpty
+
+            if hasAcne {
+                conditionRow(
+                    layer: .acne,
+                    count: result.acneBoundingBoxes.count,
+                    level: result.acneLevel,
+                    confidence: result.acneConfidence,
+                    description: "Inflammatory lesions or comedones detected on skin surface."
+                )
+            }
+
+            if hasWrinkles {
+                conditionRow(
+                    layer: .wrinkles,
+                    count: result.wrinkleBoundingBoxes.count,
+                    level: result.wrinkleLevel,
+                    confidence: result.wrinkleConfidence,
+                    description: "Fine lines and wrinkle patterns from skin texture analysis."
+                )
+            }
+
+            if !hasAcne && !hasWrinkles {
+                HStack(spacing: 16) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundColor(.green)
+                        .font(.title2)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("All Clear!")
+                            .font(.system(.subheadline, design: .rounded))
+                            .bold()
+                            .foregroundColor(Color(hex: "3A2E2B"))
+                        
+                        Text("No significant acne or wrinkle patterns detected on your skin.")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundColor(Color(hex: "75635F"))
+                            .lineLimit(nil)
+                    }
+                    Spacer()
+                }
+                .padding()
+                .background(Color.white)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.green.opacity(0.3), lineWidth: 1))
+                .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
+            }
         }
     }
 
@@ -247,7 +304,7 @@ struct SkinAnalysisResultView: View {
 
                 Text(layer.rawValue)
                     .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: "3A2E2B"))
                     .bold()
 
                 if count > 0 {
@@ -265,7 +322,7 @@ struct SkinAnalysisResultView: View {
                 if let conf = confidence {
                     Text(String(format: "%.0f%%", conf * 100))
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.6))
+                        .foregroundColor(Color(hex: "5E52B7"))
                         .bold()
                 }
 
@@ -283,14 +340,15 @@ struct SkinAnalysisResultView: View {
             }
 
             Text(description)
-                .font(.system(.caption))
-                .foregroundColor(.white.opacity(0.5))
+                .font(.system(.caption, design: .rounded))
+                .foregroundColor(Color(hex: "75635F"))
         }
         .padding()
-        .background(Color.white.opacity(0.04))
+        .background(Color.white)
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14)
-            .stroke(layer.color.opacity(0.2), lineWidth: 1))
+            .stroke(Color.white.opacity(0.8), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
     }
 
     // MARK: - Done button
@@ -303,14 +361,14 @@ struct SkinAnalysisResultView: View {
             Text("Back to home")
                 .font(.system(.headline, design: .rounded))
                 .bold()
-                .foregroundColor(.black)
+                .foregroundColor(.white)
                 .frame(width: 220)
                 .padding(.vertical, 14)
                 .background(LinearGradient(
-                    colors: [Color.cyan, Color.pink],
+                    colors: [Color(hex: "5E52B7"), Color(hex: "E95B82")],
                     startPoint: .topLeading, endPoint: .bottomTrailing))
                 .cornerRadius(25)
-                .shadow(color: Color.pink.opacity(0.3), radius: 10, x: 0, y: 5)
+                .shadow(color: Color(hex: "E95B82").opacity(0.2), radius: 10, x: 0, y: 5)
         }
     }
 

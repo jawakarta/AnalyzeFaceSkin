@@ -15,7 +15,16 @@ struct HistoryView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            LinearGradient(
+                colors: [
+                    Color(hex: "F3B8A5"), // Soft Warm Peach
+                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
+                    Color(hex: "D7D3EA")  // Gentle Lavender
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 headerView
@@ -52,7 +61,7 @@ struct HistoryView: View {
             Text("History")
                 .font(.system(.title2, design: .rounded))
                 .bold()
-                .foregroundColor(.white)
+                .foregroundColor(Color(hex: "3A2E2B"))
 
             Spacer()
 
@@ -61,15 +70,15 @@ struct HistoryView: View {
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 24))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(Color(hex: "5A4C47"))
             }
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(Color.white.opacity(0.03))
+        .background(Color.white.opacity(0.15))
         .overlay(
             Rectangle()
-                .fill(Color.white.opacity(0.1))
+                .fill(Color.black.opacity(0.06))
                 .frame(height: 1),
             alignment: .bottom
         )
@@ -80,13 +89,14 @@ struct HistoryView: View {
             Spacer()
             Image(systemName: "clock.arrow.circlepath")
                 .font(.system(size: 48))
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundColor(Color(hex: "75635F").opacity(0.5))
             Text("No History Yet")
                 .font(.system(.title3, design: .rounded))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Color(hex: "3A2E2B"))
+                .bold()
             Text("Your scan results will appear here")
-                .font(.system(.footnote))
-                .foregroundColor(.white.opacity(0.3))
+                .font(.system(.footnote, design: .rounded))
+                .foregroundColor(Color(hex: "75635F"))
             Spacer()
         }
     }
@@ -105,41 +115,39 @@ private struct HistoryCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.1))
+                    .fill(Color(hex: "ECEAF8"))
                     .frame(width: 64, height: 64)
                     .overlay(
                         Image(systemName: "face.smiling")
-                            .foregroundColor(.white.opacity(0.3))
+                            .foregroundColor(Color(hex: "5E52B7"))
                     )
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(history.skinType.capitalized)
                     .font(.system(.headline, design: .rounded))
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: "3A2E2B"))
 
                 Text(String(format: "%.0f%% Match", history.skinTypeConfidence * 100))
                     .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(.cyan)
+                    .foregroundColor(Color(hex: "5E52B7"))
+                    .bold()
 
                 Text(history.createdAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.system(.caption2))
-                    .foregroundColor(.white.opacity(0.4))
+                    .font(.system(.caption2, design: .rounded))
+                    .foregroundColor(Color(hex: "75635F"))
             }
 
             Spacer()
 
             Image(systemName: "chevron.right")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.3))
+                .foregroundColor(Color(hex: "A39A96"))
         }
         .padding(16)
-        .background(Color.white.opacity(0.05))
+        .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
+        .shadow(color: Color.black.opacity(0.03), radius: 8, x: 0, y: 4)
     }
 }
 

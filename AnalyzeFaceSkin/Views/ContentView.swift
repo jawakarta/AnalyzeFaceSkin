@@ -61,36 +61,47 @@ struct ContentView: View {
                 .onAppear { viewModel.setup() }
                 
             case .scanning(let image):
-                Color.black.ignoresSafeArea()
-                    .overlay {
-                        VStack {
-                            Spacer()
+                LinearGradient(
+                    colors: [
+                        Color(hex: "F3B8A5"), // Soft Warm Peach
+                        Color(hex: "EBD4E2"), // Pastel Creamy Pink
+                        Color(hex: "D7D3EA")  // Gentle Lavender
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+                .overlay {
+                    VStack {
+                        Spacer()
 
-                            FaceScanningView(
-                                image: image,
-                                landmarks: viewModel.capturedFaceLandmarks,
-                                analysisResult: nil,
-                                isAnalyzing: true
-                            )
+                        FaceScanningView(
+                            image: image,
+                            landmarks: viewModel.capturedFaceLandmarks,
+                            analysisResult: nil,
+                            isAnalyzing: true
+                        )
 
-                            Button("Cancel") {
-                                viewModel.reset()
-                            }
-                            .foregroundColor(.white.opacity(0.8))
-                            .font(.system(.subheadline, design: .monospaced))
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.1))
-                            .cornerRadius(20)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                            )
-                            .padding(.bottom, 50)
-
-                            Spacer()
+                        Button("Cancel") {
+                            viewModel.reset()
                         }
+                        .foregroundColor(Color(hex: "3A2E2B"))
+                        .font(.system(.subheadline, design: .rounded))
+                        .bold()
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color.white.opacity(0.6))
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.white.opacity(0.8), lineWidth: 1)
+                        )
+                        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+                        .padding(.bottom, 50)
+
+                        Spacer()
                     }
+                }
                     
             case .result(let image, let result):
                 SkinAnalysisResultView(image: image, result: result) {

@@ -14,9 +14,13 @@ struct SplashView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                colors: [Color(hex: "1B2A4A"), Color(hex: "2E4057")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [
+                    Color(hex: "F3B8A5"), // Soft Warm Peach
+                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
+                    Color(hex: "D7D3EA")  // Gentle Lavender
+                ],
+                startPoint: .top,
+                endPoint: .bottom
             )
             .ignoresSafeArea()
 
@@ -25,15 +29,20 @@ struct SplashView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 100, height: 100)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color(hex: "3A2E2B"))
 
-                Text("SKIN°82")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("SKIN")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundColor(Color(hex: "3A2E2B"))
+                    Text("°82")
+                        .font(.system(size: 34, weight: .thin, design: .rounded))
+                        .foregroundColor(Color(hex: "3A2E2B"))
+                }
 
                 Text("Know Your Skin Better")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(Color(hex: "75635F"))
             }
             .opacity(opacity)
         }

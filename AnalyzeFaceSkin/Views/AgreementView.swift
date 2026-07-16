@@ -16,9 +16,13 @@ struct AgreementView: View {
         ZStack {
             // Premium background gradient matching home
             LinearGradient(
-                colors: [Color(hex: "1B2A4A"), Color(hex: "2E4057")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [
+                    Color(hex: "F3B8A5"), // Soft Warm Peach
+                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
+                    Color(hex: "D7D3EA")  // Gentle Lavender
+                ],
+                startPoint: .top,
+                endPoint: .bottom
             )
             .ignoresSafeArea()
 
@@ -29,24 +33,24 @@ struct AgreementView: View {
                         .font(.system(size: 64))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [Color.cyan, Color.pink],
+                                colors: [Color(hex: "5E52B7"), Color(hex: "E95B82")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .shadow(color: Color.cyan.opacity(0.3), radius: 10)
+                        .shadow(color: Color(hex: "5E52B7").opacity(0.2), radius: 10)
                         .padding(.top, 40)
 
                     Text("PRIVACY AGREEMENT")
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.cyan)
+                        .foregroundColor(Color(hex: "75635F"))
                         .bold()
                         .tracking(3)
 
                     Text("Skin Scan Consent")
                         .font(.system(.title2, design: .rounded))
                         .bold()
-                        .foregroundColor(.white)
+                        .foregroundColor(Color(hex: "3A2E2B"))
                 }
 
                 // Scrollable Info Box
@@ -72,12 +76,13 @@ struct AgreementView: View {
                     }
                     .padding(20)
                 }
-                .background(Color.white.opacity(0.04))
+                .background(Color.white.opacity(0.6))
                 .cornerRadius(16)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.8), lineWidth: 1)
                 )
+                .shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 4)
 
                 // Consent Checkbox
                 Button {
@@ -88,23 +93,23 @@ struct AgreementView: View {
                     HStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(isChecked ? Color.cyan : Color.white.opacity(0.4), lineWidth: 2)
+                                .stroke(isChecked ? Color(hex: "5E52B7") : Color(hex: "3A2E2B").opacity(0.4), lineWidth: 2)
                                 .frame(width: 24, height: 24)
 
                             if isChecked {
                                 RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.cyan)
+                                    .fill(Color(hex: "5E52B7"))
                                     .frame(width: 24, height: 24)
 
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.white)
                             }
                         }
 
                         Text("I agree to allow the app to capture my face image for local machine learning analysis.")
-                            .font(.system(.footnote))
-                            .foregroundColor(.white.opacity(0.8))
+                            .font(.system(.footnote, design: .rounded))
+                            .foregroundColor(Color(hex: "3A2E2B"))
                             .multilineTextAlignment(.leading)
                             .lineLimit(nil)
                     }
@@ -122,24 +127,24 @@ struct AgreementView: View {
                     Text("Confirm & Continue")
                         .font(.system(.headline, design: .rounded))
                         .bold()
-                        .foregroundColor(isChecked ? .black : .white.opacity(0.3))
+                        .foregroundColor(isChecked ? .white : Color(hex: "75635F").opacity(0.6))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(
                             isChecked ?
                             LinearGradient(
-                                colors: [Color.cyan, Color.pink],
+                                colors: [Color(hex: "5E52B7"), Color(hex: "E95B82")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ) :
                             LinearGradient(
-                                colors: [Color.white.opacity(0.08)],
+                                colors: [Color.white.opacity(0.3)],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             )
                         )
                         .cornerRadius(30)
-                        .shadow(color: isChecked ? Color.pink.opacity(0.2) : Color.clear, radius: 10, x: 0, y: 5)
+                        .shadow(color: isChecked ? Color(hex: "E95B82").opacity(0.2) : Color.clear, radius: 10, x: 0, y: 5)
                 }
                 .disabled(!isChecked)
                 .padding(.bottom, 24)
@@ -152,21 +157,21 @@ struct AgreementView: View {
     private func agreementItem(icon: String, title: String, description: String) -> some View {
         HStack(alignment: .top, spacing: 16) {
             Image(systemName: icon)
-                .font(.system(size: 20))
-                .foregroundColor(.cyan)
+                .font(.system(size: 18))
+                .foregroundColor(Color(hex: "5E52B7"))
                 .frame(width: 28, height: 28)
-                .background(Color.cyan.opacity(0.1))
+                .background(Color(hex: "5E52B7").opacity(0.1))
                 .clipShape(Circle())
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(.subheadline, design: .rounded))
                     .bold()
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: "3A2E2B"))
 
                 Text(description)
-                    .font(.system(.caption))
-                    .foregroundColor(.white.opacity(0.6))
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundColor(Color(hex: "75635F"))
                     .lineLimit(nil)
             }
         }
