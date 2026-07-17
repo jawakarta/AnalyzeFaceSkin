@@ -13,6 +13,7 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
+            // Consistent pastel warm peach/lavender gradient background
             LinearGradient(
                 colors: [
                     Color(hex: "F3B8A5"), // Soft Warm Peach
@@ -24,25 +25,18 @@ struct SplashView: View {
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                Image(systemName: "face.smiling")
+            VStack(spacing: 36) {
+                // Face scanner logo asset loaded directly with original colors
+                Image("black_logo")
+                    .renderingMode(.original)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 100, height: 100)
-                    .foregroundStyle(Color(hex: "3A2E2B"))
+                    .frame(width: 170, height: 170)
 
-                HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("SKIN")
-                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                        .foregroundColor(Color(hex: "3A2E2B"))
-                    Text("°82")
-                        .font(.system(size: 34, weight: .thin, design: .rounded))
-                        .foregroundColor(Color(hex: "3A2E2B"))
-                }
-
-                Text("Know Your Skin Better")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundStyle(Color(hex: "75635F"))
+                // Subtitle text from the design
+                Text("Know Your Skin Better!")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(Color(hex: "2E2522"))
             }
             .opacity(opacity)
         }
@@ -50,7 +44,7 @@ struct SplashView: View {
             withAnimation(.easeIn(duration: 0.8)) {
                 opacity = 1.0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
                 withAnimation(.easeOut(duration: 0.4)) {
                     isActive = true
                 }
@@ -60,6 +54,41 @@ struct SplashView: View {
             HomeView()
         }
     }
+}
+
+// Custom shape to draw the thick corner brackets of the camera scanner logo
+struct SplashCornerBrackets: Shape {
+    let length: CGFloat
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        
+        // Top-Left
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY + length))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX + length, y: rect.minY))
+        
+        // Top-Right
+        path.move(to: CGPoint(x: rect.maxX - length, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + length))
+        
+        // Bottom-Left
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY - length))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX + length, y: rect.maxY))
+        
+        // Bottom-Right
+        path.move(to: CGPoint(x: rect.maxX - length, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - length))
+        
+        return path
+    }
+}
+
+#Preview {
+    SplashView()
 }
 
 extension Color {

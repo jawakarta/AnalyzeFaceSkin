@@ -59,30 +59,7 @@ struct HomeView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Header (Left Aligned)
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(alignment: .firstTextBaseline, spacing: 2) {
-                            Text("SKIN")
-                                .font(.system(size: 34, weight: .bold, design: .rounded))
-                                .foregroundColor(Color(hex: "3A2E2B"))
-                            Text("°82")
-                                .font(.system(size: 34, weight: .thin, design: .rounded))
-                                .foregroundColor(Color(hex: "3A2E2B"))
-                        }
-                        
-                        Text("SKIN INTELLIGENCE")
-                            .font(.system(size: 11, weight: .bold, design: .monospaced))
-                            .foregroundColor(Color(hex: "75635F"))
-                            .tracking(2)
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-
                 Spacer()
-
                 // Centered Animating Scan Button Area
                 VStack(spacing: 32) {
                     ZStack {
