@@ -162,9 +162,19 @@ struct ContentView: View {
                 .padding(.leading, 20)
                 .padding(.top, 16)
             }
-            .overlay(alignment: .top) {
-                GuideTextView(text: viewModel.guideText)
-                    .padding(.top, 60)
+            .overlay(alignment: .topTrailing) {
+                Button {
+                    showPhotoPicker = true
+                } label: {
+                    Image(systemName: "photo.on.rectangle")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(.black.opacity(0.4))
+                        .clipShape(Circle())
+                }
+                .padding(.trailing, 20)
+                .padding(.top, 16)
             }
             .overlay(alignment: .center) {
                 FaceOverlayView(
@@ -174,12 +184,8 @@ struct ContentView: View {
                 )
             }
             .overlay(alignment: .bottom) {
-                CaptureControlsView(
-                    onCapture: { viewModel.capturePhoto() },
-                    onGallery: { showPhotoPicker = true },
-                    isCaptureDisabled: !viewModel.faceState.isDetected
-                )
-                .padding(.bottom, 40)
+                GuideTextView(text: viewModel.guideText)
+                    .padding(.bottom, 80)
             }
     }
 

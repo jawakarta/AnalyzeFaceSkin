@@ -11,16 +11,24 @@ struct ProgressRingView: View {
     let progress: Double
 
     private let lineWidth: CGFloat = 5
-    private let neonGreen = Color(red: 57/255, green: 255/255, blue: 20/255)
+    private let progressColor = Color(hex: "E5B4D6") // Pastel Pink / Lavender from the screenshot
 
     var body: some View {
         ZStack {
+            // Background guide: dashed pastel pink
             OvalProgressShape(progress: 1.0)
-                .stroke(Color.white.opacity(0.15), lineWidth: lineWidth)
+                .stroke(
+                    progressColor.opacity(0.4),
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, dash: [12, 8])
+                )
  
+            // Active progress track: solid glowing pastel pink
             OvalProgressShape(progress: progress)
-                .stroke(neonGreen, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .shadow(color: neonGreen.opacity(0.6), radius: 5)
+                .stroke(
+                    progressColor,
+                    style: StrokeStyle(lineWidth: lineWidth + 0.5, lineCap: .round)
+                )
+                .shadow(color: progressColor.opacity(0.6), radius: 6)
                 .animation(.linear(duration: 0.1), value: progress)
         }
     }
