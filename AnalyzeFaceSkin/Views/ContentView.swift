@@ -9,6 +9,7 @@ import SwiftUI
 import PhotosUI
 
 struct ContentView: View {
+    @Binding var navPath: [AppScreen]
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = CameraViewModel()
     @State private var showPhotoPicker = false
@@ -17,55 +18,88 @@ struct ContentView: View {
     var body: some View {
         Group {
             switch viewModel.captureState {
-            case .idle, .detecting, .aligning, .ready, .capturing, .captured:
+            case .idle, .detecting, .aligning, .ready, .capturing:
                 ZStack {
                     cameraLayer
                     flashOverlay
-                    
-                    if case .captured(let image) = viewModel.captureState {
-                        Color.black.opacity(0.5).ignoresSafeArea()
-                            .overlay {
-                                VStack {
-                                    Spacer()
-
-                                    // Static preview of the captured face
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .cornerRadius(16)
-                                        .padding(40)
-
-                                    HStack(spacing: 40) {
-                                        Button("Retake") {
-                                            viewModel.reset()
-                                        }
-                                        .foregroundColor(.white)
-                                        .padding()
-                                        .background(.gray)
-                                        .clipShape(Circle())
-
-                                        Button("Scan") {
-                                            viewModel.startScanning()
-                                        }
-                                        .foregroundColor(.white)
-                                        .padding()
-                                        .background(.blue)
-                                        .clipShape(Circle())
-                                    }
-
-                                    Spacer()
-                                }
-                            }
-                    }
                 }
                 .onAppear { viewModel.setup() }
                 
+            case .captured(let image):
+                LinearGradient(
+                    colors: [
+                        Color(hex: "F3B8A5"),
+                        Color(hex: "EBD4E2"),
+                        Color(hex: "D7D3EA")
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+                .overlay {
+                    VStack {
+                        Spacer()
+
+                        FaceScanningView(
+                            image: image,
+                            landmarks: viewModel.capturedFaceLandmarks,
+                            analysisResult: nil,
+                            isAnalyzing: false
+                        )
+
+                        HStack(spacing: 16) {
+                            Button("Retake") {
+                                viewModel.reset()
+                            }
+                            .foregroundColor(Color(hex: "3A2E2B"))
+                            .font(.system(.subheadline, design: .rounded))
+                            .bold()
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Color.white.opacity(0.6))
+                            .cornerRadius(20)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .stroke(Color.white.opacity(0.8), lineWidth: 1)
+                            )
+                            .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+
+                            Button {
+                                viewModel.startScanning()
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 16, weight: .semibold))
+                                    Text("Analyze")
+                                        .font(.system(.subheadline, design: .rounded))
+                                        .bold()
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color(hex: "5E52B7"), Color(hex: "E95B82")],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .cornerRadius(20)
+                                .shadow(color: Color(hex: "5E52B7").opacity(0.3), radius: 8, x: 0, y: 4)
+                            }
+                        }
+                        .padding(.bottom, 50)
+
+                        Spacer()
+                    }
+                }
+                    
             case .scanning(let image):
                 LinearGradient(
                     colors: [
-                        Color(hex: "F3B8A5"), // Soft Warm Peach
-                        Color(hex: "EBD4E2"), // Pastel Creamy Pink
-                        Color(hex: "D7D3EA")  // Gentle Lavender
+                        Color(hex: "F3B8A5"),
+                        Color(hex: "EBD4E2"),
+                        Color(hex: "D7D3EA")
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -104,10 +138,26 @@ struct ContentView: View {
                 }
                     
             case .result(let image, let result):
-                SkinAnalysisResultView(image: image, result: result) {
-                    viewModel.reset()
-                    dismiss()
-                }
+                LinearGradient(
+                    colors: [
+                        Color(hex: "F3B8A5"),
+                        Color(hex: "EBD4E2"),
+                        Color(hex: "D7D3EA")
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+            }
+        }
+        .onChange(of: viewModel.captureState) { _, newState in
+            if case .result(let image, let result) = newState {
+                navPath.append(.result(
+                    image:            image,
+                    result:           result,
+                    grayscalePreview: viewModel.grayscalePreview,
+                    clahePreview:     viewModel.clahePreview
+                ))
             }
         }
         .onChange(of: selectedPhoto) { _, item in loadPhoto(from: item) }

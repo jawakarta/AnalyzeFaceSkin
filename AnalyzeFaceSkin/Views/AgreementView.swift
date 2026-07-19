@@ -65,7 +65,7 @@ struct AgreementView: View {
                         agreementItem(
                             icon: "cpu",
                             title: "On-Device Machine Learning",
-                            description: "Images are processed locally using advanced AI models to analyze skin type, acne areas, and wrinkle patterns."
+                            description: "Images are processed locally using advanced AI models to analyze skin type and acne conditions."
                         )
 
                         agreementItem(

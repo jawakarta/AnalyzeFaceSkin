@@ -9,10 +9,16 @@ import UIKit
 
 class SkinAnalysisService {
     private lazy var skinTypeService  = SkinTypeClassifierService()
-    private lazy var conditionService = AcneWrinkleDetectionService()
+    private lazy var conditionService = AcneDetectionService()
+
+    struct AnalysisOutput {
+        let result:            SkinAnalysisResult
+        let grayscalePreview:  UIImage?
+        let clahePreview:      UIImage?
+    }
 
     func analyze(image: UIImage,
-                 completion: @escaping (Result<SkinAnalysisResult, Error>) -> Void) {
+                 completion: @escaping (Result<AnalysisOutput, Error>) -> Void) {
 
         skinTypeService.classify(image: image) { [weak self] typeResult in
             guard let self = self else { return }
@@ -26,7 +32,7 @@ class SkinAnalysisService {
             }
 
             self.conditionService.detect(image: image) { detectionResult in
-                var conditionData: AcneWrinkleDetectionService.DetectionResult?
+                var conditionData: AcneDetectionService.DetectionResult?
 
                 switch detectionResult {
                 case .success(let d): conditionData = d
@@ -41,16 +47,16 @@ class SkinAnalysisService {
                     let result = SkinAnalysisResult(
                         skinType:           skinTypeData?.type,
                         skinTypeConfidence: skinTypeData?.confidence,
-
                         acneLevel:         conditionData?.acne.level,
                         acneConfidence:    conditionData?.acne.confidence,
-                        acneBoundingBoxes: conditionData?.acne.boundingBoxes ?? [],
-
-                        wrinkleLevel:         conditionData?.wrinkles.level,
-                        wrinkleConfidence:    conditionData?.wrinkles.confidence,
-                        wrinkleBoundingBoxes: conditionData?.wrinkles.boundingBoxes ?? []
+                        acneBoundingBoxes: conditionData?.acne.boundingBoxes ?? []
                     )
-                    completion(.success(result))
+                    let output = AnalysisOutput(
+                        result:           result,
+                        grayscalePreview: conditionData?.grayscalePreview,
+                        clahePreview:     conditionData?.clahePreview
+                    )
+                    completion(.success(output))
                 }
             }
         }
