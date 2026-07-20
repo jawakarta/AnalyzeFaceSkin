@@ -24,6 +24,8 @@ class CameraViewModel: ObservableObject {
     @Published var isAnalyzing = false
     @Published var analysisError: String? = nil
     @Published var showAnalysisErrorAlert = false
+    @Published var grayscalePreview: UIImage? = nil
+    @Published var clahePreview: UIImage? = nil
 
     let cameraService = CameraService()
     private let skinAnalysisService = SkinAnalysisService()
@@ -73,8 +75,8 @@ class CameraViewModel: ObservableObject {
             capturedImage = processed.croppedImage
             capturedFaceLandmarks = processed.landmarks
             captureState = .captured(processed.croppedImage)
+            cameraService.stop()
         } else {
-            // Reject if no face detected in imported photo
             showNoFaceAlert = true
             reset()
         }
@@ -93,6 +95,8 @@ class CameraViewModel: ObservableObject {
         isAnalyzing = true
         analysisResult = nil
         analysisError = nil
+        grayscalePreview = nil
+        clahePreview = nil
         
         let startTime = Date()
         skinAnalysisService.analyze(image: image) { [weak self] result in
@@ -103,9 +107,11 @@ class CameraViewModel: ObservableObject {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
                 self?.isAnalyzing = false
                 switch result {
-                case .success(let analysis):
-                    self?.analysisResult = analysis
-                    self?.captureState = .result(image, analysis)
+                case .success(let output):
+                    self?.analysisResult = output.result
+                    self?.grayscalePreview = output.grayscalePreview
+                    self?.clahePreview = output.clahePreview
+                    self?.captureState = .result(image, output.result)
                 case .failure(let error):
                     print("Skin analysis failed: \(error.localizedDescription)")
                     self?.analysisError = error.localizedDescription
@@ -127,6 +133,8 @@ class CameraViewModel: ObservableObject {
         stopStabilityTimer()
         analysisResult = nil
         isAnalyzing = false
+        grayscalePreview = nil
+        clahePreview = nil
         cameraService.start()
     }
 
@@ -248,10 +256,9 @@ extension CameraViewModel: CameraServiceDelegate {
             captureBoundingBox = nil
             capturedImage = processed.croppedImage
             capturedFaceLandmarks = processed.landmarks
-            captureState = .captured(processed.croppedImage)
             voiceService.speak("Perfect")
+            captureState = .captured(processed.croppedImage)
         } else {
-            // Reject if no face detected in captured photo
             captureBoundingBox = nil
             showNoFaceAlert = true
             reset()

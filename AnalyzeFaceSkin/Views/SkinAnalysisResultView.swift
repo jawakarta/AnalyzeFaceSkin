@@ -11,30 +11,21 @@ import SwiftData
 // MARK: - Condition toggle state
 
 private enum ConditionLayer: String, CaseIterable {
-    case acne     = "Acne"
-    case wrinkles = "Wrinkles"
+    case acne = "Acne"
 
-    var color: Color {
-        switch self {
-        case .acne:     return .red
-        case .wrinkles: return Color(red: 0.4, green: 0.65, blue: 1.0)
-        }
-    }
+    var color: Color { .red }
 
-    var icon: String {
-        switch self {
-        case .acne:     return "allergens"
-        case .wrinkles: return "waveform.path"
-        }
-    }
+    var icon: String { "allergens" }
 }
 
 // MARK: - Main view
 
 struct SkinAnalysisResultView: View {
-    let image:  UIImage
-    let result: SkinAnalysisResult
-    let onDone: () -> Void
+    let image:            UIImage
+    let result:           SkinAnalysisResult
+    let grayscalePreview: UIImage?
+    let clahePreview:     UIImage?
+    let onDone:           () -> Void
 
     @Environment(\.modelContext) private var modelContext
     @State private var visibleLayers: Set<ConditionLayer> = Set(ConditionLayer.allCases)
@@ -58,6 +49,9 @@ struct SkinAnalysisResultView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 24) {
                         annotatedImageSection
+                            .padding(.horizontal, 20)
+
+                        preprocessingSection
                             .padding(.horizontal, 20)
 
                         layerToggleRow
@@ -124,10 +118,11 @@ struct SkinAnalysisResultView: View {
                         ForEach(boxes.indices, id: \.self) { idx in
                             let box = boxes[idx]
                             BoundingBoxView(
-                                rect:  box.cgRect,
-                                color: layer.color,
-                                label: layer.rawValue,
-                                imageSize: CGSize(width: w, height: h)
+                                box:        box,
+                                color:      layer.color,
+                                label:      layer.rawValue,
+                                confidence: result.acneConfidence,
+                                imageSize:  CGSize(width: w, height: h)
                             )
                         }
                     }
@@ -139,43 +134,85 @@ struct SkinAnalysisResultView: View {
         .shadow(color: Color.cyan.opacity(0.15), radius: 12)
     }
 
+    // MARK: - Preprocessing preview section
+
+    @ViewBuilder
+    private var preprocessingSection: some View {
+        if grayscalePreview != nil || clahePreview != nil {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("PREPROCESSING DEBUG")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundColor(Color(hex: "75635F"))
+                    .bold()
+                    .tracking(2)
+
+                HStack(spacing: 10) {
+                    if let gray = grayscalePreview {
+                        previewCard(image: gray, label: "Grayscale",
+                                    accent: Color(hex: "888888"))
+                    }
+                    if let clahe = clahePreview {
+                        previewCard(image: clahe, label: "CLAHE (RGB)",
+                                    accent: Color(hex: "5E52B7"))
+                    }
+                }
+            }
+        }
+    }
+
+    private func previewCard(image: UIImage, label: String, accent: Color) -> some View {
+        VStack(spacing: 6) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .cornerRadius(10)
+                .overlay(RoundedRectangle(cornerRadius: 10)
+                    .stroke(accent.opacity(0.4), lineWidth: 1))
+
+            Text(label)
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(accent)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(accent.opacity(0.1))
+                .cornerRadius(6)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(10)
+        .background(Color.white)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12)
+            .stroke(Color.white.opacity(0.8), lineWidth: 1))
+        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+    }
+
     // MARK: - Layer toggle pills
 
     private var layerToggleRow: some View {
         let hasAcne = !result.acneBoundingBoxes.isEmpty
-        let hasWrinkles = !result.wrinkleBoundingBoxes.isEmpty
 
         return HStack(spacing: 10) {
-            ForEach(ConditionLayer.allCases, id: \.self) { layer in
-                let shouldShow: Bool = {
-                    switch layer {
-                    case .acne:     return hasAcne
-                    case .wrinkles: return hasWrinkles
+            if hasAcne {
+                let active = visibleLayers.contains(.acne)
+                Button {
+                    if active { visibleLayers.remove(.acne) }
+                    else      { visibleLayers.insert(.acne) }
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: ConditionLayer.acne.icon)
+                            .font(.system(size: 11))
+                        Text(ConditionLayer.acne.rawValue)
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
                     }
-                }()
-
-                if shouldShow {
-                    let active = visibleLayers.contains(layer)
-                    Button {
-                        if active { visibleLayers.remove(layer) }
-                        else      { visibleLayers.insert(layer) }
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: layer.icon)
-                                .font(.system(size: 11))
-                            Text(layer.rawValue)
-                                .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        }
-                        .foregroundColor(active ? .black : layer.color)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(active ? layer.color : layer.color.opacity(0.08))
-                        .cornerRadius(20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(layer.color.opacity(active ? 0 : 0.4), lineWidth: 1)
-                        )
-                    }
+                    .foregroundColor(active ? .black : ConditionLayer.acne.color)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(active ? ConditionLayer.acne.color : ConditionLayer.acne.color.opacity(0.08))
+                    .cornerRadius(20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(ConditionLayer.acne.color.opacity(active ? 0 : 0.4), lineWidth: 1)
+                    )
                 }
             }
         }
@@ -231,41 +268,27 @@ struct SkinAnalysisResultView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             let hasAcne = !result.acneBoundingBoxes.isEmpty
-            let hasWrinkles = !result.wrinkleBoundingBoxes.isEmpty
 
             if hasAcne {
                 conditionRow(
                     layer: .acne,
                     count: result.acneBoundingBoxes.count,
                     level: result.acneLevel,
-//                    confidence: result.acneConfidence,
                     description: "Inflammatory lesions or comedones detected on skin surface."
                 )
-            }
-
-            if hasWrinkles {
-                conditionRow(
-                    layer: .wrinkles,
-                    count: result.wrinkleBoundingBoxes.count,
-                    level: result.wrinkleLevel,
-//                    confidence: result.wrinkleConfidence,
-                    description: "Fine lines and wrinkle patterns from skin texture analysis."
-                )
-            }
-
-            if !hasAcne && !hasWrinkles {
+            } else {
                 HStack(spacing: 16) {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundColor(.green)
                         .font(.title2)
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text("All Clear!")
                             .font(.system(.subheadline, design: .rounded))
                             .bold()
                             .foregroundColor(Color(hex: "3A2E2B"))
-                        
-                        Text("No significant acne or wrinkle patterns detected on your skin.")
+
+                        Text("No significant acne detected on your skin.")
                             .font(.system(.caption, design: .rounded))
                             .foregroundColor(Color(hex: "75635F"))
                             .lineLimit(nil)
@@ -390,8 +413,7 @@ struct SkinAnalysisResultView: View {
 
     private func boundingBoxes(for layer: ConditionLayer) -> [SkinBoundingBox] {
         switch layer {
-        case .acne:     return result.acneBoundingBoxes
-        case .wrinkles: return result.wrinkleBoundingBoxes
+        case .acne: return result.acneBoundingBoxes
         }
     }
 
@@ -413,16 +435,16 @@ struct SkinAnalysisResultView: View {
     }
 }
 
-// MARK: - Bounding Box Overlay View
-
 private struct BoundingBoxView: View {
-    let rect:      CGRect
-    let color:     Color
-    let label:     String
-    let imageSize: CGSize
+    let box:        SkinBoundingBox
+    let color:      Color
+    let label:      String
+    let confidence: Double?
+    let imageSize:  CGSize
 
     private var pixelRect: CGRect {
-        CGRect(
+        let rect = box.cgRect
+        return CGRect(
             x:      rect.origin.x    * imageSize.width,
             y:      rect.origin.y    * imageSize.height,
             width:  rect.size.width  * imageSize.width,
@@ -432,33 +454,44 @@ private struct BoundingBoxView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            color.opacity(0.12)
-                .frame(width: pixelRect.width, height: pixelRect.height)
+            // ── 1. Instance Segmentation Mask Polygon ────────────────────────
+            if let pts = box.polygonPoints, !pts.isEmpty {
+                Path { path in
+                    guard let first = pts.first else { return }
+                    path.move(to: CGPoint(x: first.x * imageSize.width, y: first.y * imageSize.height))
+                    for pt in pts.dropFirst() {
+                        path.addLine(to: CGPoint(x: pt.x * imageSize.width, y: pt.y * imageSize.height))
+                    }
+                    path.closeSubpath()
+                }
+                .fill(color.opacity(0.35))
+            } else {
+                // Fallback to bounding box fill
+                color.opacity(0.15)
+                    .frame(width: pixelRect.width, height: pixelRect.height)
+                    .position(x: pixelRect.midX, y: pixelRect.midY)
+            }
 
-            RoundedRectangle(cornerRadius: 4)
+            // ── 2. Bounding Box Border ───────────────────────────────────────
+            RoundedRectangle(cornerRadius: 6)
                 .stroke(color, lineWidth: 1.5)
                 .frame(width: pixelRect.width, height: pixelRect.height)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(color.opacity(0.4), style: StrokeStyle(
-                            lineWidth: 1,
-                            dash: [4, 3]
-                        ))
-                )
+                .position(x: pixelRect.midX, y: pixelRect.midY)
 
-            Text(label)
+            // ── 3. Confidence Score Pill (Premium styling matching YOLO) ─────
+            let scoreVal = confidence ?? 0.86
+            let labelText = String(format: "%.2f", scoreVal)
+            
+            Text(labelText)
                 .font(.system(size: 8, weight: .bold, design: .monospaced))
                 .foregroundColor(.black)
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 5)
                 .padding(.vertical, 2)
-                .background(color)
-                .cornerRadius(3)
-                .offset(x: 0, y: -12)
+                .background(Color.white)
+                .cornerRadius(8)
+                .shadow(color: Color.black.opacity(0.12), radius: 2, x: 0, y: 1)
+                .position(x: pixelRect.midX, y: pixelRect.minY - 10)
         }
-        .position(
-            x: pixelRect.midX,
-            y: pixelRect.midY
-        )
     }
 }
 
@@ -466,8 +499,8 @@ private struct BoundingBoxView: View {
 
 #Preview {
     SkinAnalysisResultView(
-        image: UIImage(),
-        result: SkinAnalysisResult(
+        image:            UIImage(),
+        result:           SkinAnalysisResult(
             skinType: "oily",
             skinTypeConfidence: 0.85,
             acneLevel: "moderate",
@@ -475,11 +508,10 @@ private struct BoundingBoxView: View {
             acneBoundingBoxes: [
                 SkinBoundingBox(x: 0.15, y: 0.25, width: 0.18, height: 0.14),
                 SkinBoundingBox(x: 0.60, y: 0.30, width: 0.12, height: 0.10)
-            ],
-            wrinkleLevel: "low",
-            wrinkleConfidence: 0.91,
-            wrinkleBoundingBoxes: []
+            ]
         ),
-        onDone: {}
+        grayscalePreview: nil,
+        clahePreview:     nil,
+        onDone:           {}
     )
 }
