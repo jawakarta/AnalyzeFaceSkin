@@ -12,29 +12,41 @@ struct AcneDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                HeaderSection(spotCount: spotCount)
-                
-                DetectionAlertBox(spotCount: spotCount)
-                
-                CausesSection()
-                
-                Divider()
-                
-                SkinCareSection()
-                
-                Divider()
-                
-                PreventionSection()
-                
-                TakeawayBox()
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(hex: "FDF7FB"), // Soft pale rose
+                    Color(hex: "F7F6FD"), // Soft lavender
+                    Color(hex: "FFFFFF")  // Pure white
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    HeaderSection(spotCount: spotCount)
+                    
+                    DetectionAlertBox(spotCount: spotCount)
+                    
+                    CausesSection()
+                    
+                    Divider()
+                    
+                    SkinCareSection()
+                    
+                    Divider()
+                    
+                    PreventionSection()
+                    
+                    TakeawayBox()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 32)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
-            .padding(.bottom, 32)
         }
-        .background(Color(.systemGroupedBackground).opacity(0.3).ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(false)
     }
