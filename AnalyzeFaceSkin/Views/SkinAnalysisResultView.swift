@@ -131,23 +131,16 @@ struct SkinAnalysisResultView: View {
                 .cornerRadius(24)
                 .overlay(
                     GeometryReader { geo in
-                        let w = geo.size.width
-                        let h = geo.size.height
                         ZStack(alignment: .topLeading) {
                             let boxes = result.acneBoundingBoxes
                             ForEach(boxes.indices, id: \.self) { idx in
-                                let box = boxes[idx]
-                                let pixelRect = CGRect(
-                                    x: box.x * w,
-                                    y: box.y * h,
-                                    width: box.width * w,
-                                    height: box.height * h
+                                BoundingBoxView(
+                                    box: boxes[idx],
+                                    color: .red,
+                                    label: "Acne",
+                                    confidence: result.acneConfidence,
+                                    imageSize: geo.size
                                 )
-                                Circle()
-                                    .fill(Color.red.opacity(0.6))
-                                    .frame(width: 24, height: 24)
-                                    .overlay(Circle().fill(Color.red).frame(width: 10, height: 10))
-                                    .position(x: pixelRect.midX, y: pixelRect.midY)
                             }
                         }
                     }
@@ -401,18 +394,23 @@ private struct BoundingBoxView: View {
                 .frame(width: pixelRect.width, height: pixelRect.height)
                 .position(x: pixelRect.midX, y: pixelRect.midY)
 
-            let scoreVal = confidence ?? 0.86
-            let labelText = String(format: "%.2f", scoreVal)
+            let labelText: String = {
+                if let conf = confidence {
+                    return String(format: "%@ %.0f%%", label, conf * 100)
+                } else {
+                    return label
+                }
+            }()
             
             Text(labelText)
-                .font(.system(size: 8, weight: .bold, design: .monospaced))
-                .foregroundColor(.black)
-                .padding(.horizontal, 5)
+                .font(.system(size: 9, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+                .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Color.white)
-                .cornerRadius(8)
+                .background(color)
+                .cornerRadius(4)
                 .shadow(color: Color.black.opacity(0.12), radius: 2, x: 0, y: 1)
-                .position(x: pixelRect.midX, y: pixelRect.minY - 10)
+                .position(x: pixelRect.midX, y: max(10, pixelRect.minY - 10))
         }
     }
 }
