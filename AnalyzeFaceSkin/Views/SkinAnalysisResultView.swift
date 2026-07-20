@@ -25,6 +25,7 @@ struct SkinAnalysisResultView: View {
     let result:           SkinAnalysisResult
     let grayscalePreview: UIImage?
     let clahePreview:     UIImage?
+    var isFromHistory:    Bool = false
     let onDone:           () -> Void
 
     @Environment(\.modelContext) private var modelContext
@@ -34,9 +35,9 @@ struct SkinAnalysisResultView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(hex: "F3B8A5"), // Soft Warm Peach
-                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
-                    Color(hex: "D7D3EA")  // Gentle Lavender
+                    Color(hex: "FDF7FB"), // Soft pale rose
+                    Color(hex: "F7F6FD"), // Soft lavender
+                    Color(hex: "FFFFFF")  // Pure white
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -60,8 +61,10 @@ struct SkinAnalysisResultView: View {
                         }
                         .padding(.horizontal, 20)
 
-                        doneButton
-                            .padding(.vertical, 20)
+                        if !isFromHistory {
+                            doneButton
+                                .padding(.vertical, 20)
+                        }
                     }
                     .padding(.top, 16)
                 }
