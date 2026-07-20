@@ -14,35 +14,72 @@ struct HistoryView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(hex: "F3B8A5"), // Soft Warm Peach
-                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
-                    Color(hex: "D7D3EA")  // Gentle Lavender
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(hex: "FDF7FB"), // Soft pale rose
+                        Color(hex: "F7F6FD"), // Soft lavender
+                        Color(hex: "FFFFFF")  // Pure white
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                headerView
-
-                if histories.isEmpty {
-                    emptyState
-                } else {
-                    List {
-                        ForEach(histories) { history in
-                            HistoryCard(history: history)
+                VStack(spacing: 0) {
+                    if histories.isEmpty {
+                        emptyState
+                    } else {
+                        List {
+                            ForEach(histories) { history in
+                                ZStack {
+                                    HistoryCard(history: history)
+                                    
+                                    NavigationLink(destination: SkinAnalysisResultView(
+                                        image:            history.uiImage ?? UIImage(),
+                                        result:           SkinAnalysisResult(
+                                            skinType:           history.skinType,
+                                            skinTypeConfidence: history.skinTypeConfidence,
+                                            acneLevel:         nil,
+                                            acneConfidence:    nil,
+                                            acneBoundingBoxes: history.acneBoundingBoxes
+                                        ),
+                                        grayscalePreview: nil,
+                                        clahePreview:     nil,
+                                        isFromHistory:    true,
+                                        onDone:           {}
+                                    )) {
+                                        EmptyView()
+                                    }
+                                    .opacity(0.0)
+                                }
                                 .listRowInsets(EdgeInsets(top: 6, leading: 20, bottom: 6, trailing: 20))
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
+                            }
+                            .onDelete(perform: deleteHistory)
                         }
-                        .onDelete(perform: deleteHistory)
+                        .listStyle(.plain)
+                        .scrollContentBackground(.hidden)
                     }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
+                }
+            }
+            .navigationTitle("History")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Back")
+                                .font(.system(size: 16))
+                        }
+                        .foregroundColor(Color(hex: "5A4C47"))
+                    }
                 }
             }
         }
@@ -54,34 +91,6 @@ struct HistoryView: View {
             modelContext.delete(history)
         }
         try? modelContext.save()
-    }
-
-    private var headerView: some View {
-        HStack {
-            Text("History")
-                .font(.system(.title2, design: .rounded))
-                .bold()
-                .foregroundColor(Color(hex: "3A2E2B"))
-
-            Spacer()
-
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(Color(hex: "5A4C47"))
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .background(Color.white.opacity(0.15))
-        .overlay(
-            Rectangle()
-                .fill(Color.black.opacity(0.06))
-                .frame(height: 1),
-            alignment: .bottom
-        )
     }
 
     private var emptyState: some View {

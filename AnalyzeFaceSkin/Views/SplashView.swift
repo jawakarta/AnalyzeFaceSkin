@@ -13,12 +13,12 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            // Consistent pastel warm peach/lavender gradient background
+            // Subtle warm pink/lavender to white background gradient
             LinearGradient(
                 colors: [
-                    Color(hex: "F3B8A5"), // Soft Warm Peach
-                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
-                    Color(hex: "D7D3EA")  // Gentle Lavender
+                    Color(hex: "FDF7FB"), // Soft pale rose
+                    Color(hex: "F7F6FD"), // Soft lavender
+                    Color(hex: "FFFFFF")  // Pure white
                 ],
                 startPoint: .top,
                 endPoint: .bottom

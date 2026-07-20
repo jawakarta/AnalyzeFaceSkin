@@ -8,7 +8,6 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - Condition toggle state
 
 private enum ConditionLayer: String, CaseIterable {
     case acne = "Acne"
@@ -24,17 +23,26 @@ struct SkinAnalysisResultView: View {
     let result:           SkinAnalysisResult
     let grayscalePreview: UIImage?
     let clahePreview:     UIImage?
+    var isFromHistory:    Bool = false
     let onDone:           () -> Void
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @State private var navigateToAcneDetail = false
     @State private var hasSavedHistory = false
 
     var body: some View {
         ZStack {
-            Color(.systemGroupedBackground)
-                .opacity(0.3)
-                .ignoresSafeArea()
+            LinearGradient(
+                colors: [
+                    Color(hex: "FDF7FB"), // Soft pale rose
+                    Color(hex: "F7F6FD"), // Soft lavender
+                    Color(hex: "FFFFFF")  // Pure white
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 topBarView
@@ -63,10 +71,12 @@ struct SkinAnalysisResultView: View {
                         findingsSection
                             .padding(.horizontal, 20)
                         
-                        backToHomeButton
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
-                            .padding(.bottom, 20)
+                        if !isFromHistory {
+                            backToHomeButton
+                                .padding(.horizontal, 20)
+                                .padding(.top, 8)
+                                .padding(.bottom, 20)
+                        }
                     }
                     .padding(.top, 12)
                 }
@@ -85,8 +95,12 @@ struct SkinAnalysisResultView: View {
     private var topBarView: some View {
         HStack {
             Button(action: {
-                saveToHistory()
-                onDone()
+                if isFromHistory {
+                    dismiss()
+                } else {
+                    saveToHistory()
+                    onDone()
+                }
             }) {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 16, weight: .semibold))
@@ -323,12 +337,14 @@ struct SkinAnalysisResultView: View {
 
 
     private func saveToHistory() {
-        guard !hasSavedHistory, let skinType = result.skinType else { return }
+        guard !isFromHistory, !hasSavedHistory, let skinType = result.skinType else { return }
         hasSavedHistory = true
         let imageData = image.jpegData(compressionQuality: 0.6)
         let history = SkinAnalysisHistory(
             skinType: skinType,
             skinTypeConfidence: result.skinTypeConfidence ?? 0,
+            acneSpotCount: result.acneBoundingBoxes.count,
+            acneBoundingBoxes: result.acneBoundingBoxes,
             imageData: imageData
         )
         modelContext.insert(history)
