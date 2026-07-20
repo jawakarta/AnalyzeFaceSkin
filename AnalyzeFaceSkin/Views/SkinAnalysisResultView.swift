@@ -51,9 +51,6 @@ struct SkinAnalysisResultView: View {
                         annotatedImageSection
                             .padding(.horizontal, 20)
 
-                        preprocessingSection
-                            .padding(.horizontal, 20)
-
                         layerToggleRow
                             .padding(.horizontal, 20)
 
@@ -132,58 +129,6 @@ struct SkinAnalysisResultView: View {
         }
         .aspectRatio(image.size.width / max(image.size.height, 1), contentMode: .fit)
         .shadow(color: Color.cyan.opacity(0.15), radius: 12)
-    }
-
-    // MARK: - Preprocessing preview section
-
-    @ViewBuilder
-    private var preprocessingSection: some View {
-        if grayscalePreview != nil || clahePreview != nil {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("PREPROCESSING DEBUG")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(Color(hex: "75635F"))
-                    .bold()
-                    .tracking(2)
-
-                HStack(spacing: 10) {
-                    if let gray = grayscalePreview {
-                        previewCard(image: gray, label: "Grayscale",
-                                    accent: Color(hex: "888888"))
-                    }
-                    if let clahe = clahePreview {
-                        previewCard(image: clahe, label: "CLAHE (RGB)",
-                                    accent: Color(hex: "5E52B7"))
-                    }
-                }
-            }
-        }
-    }
-
-    private func previewCard(image: UIImage, label: String, accent: Color) -> some View {
-        VStack(spacing: 6) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFit()
-                .cornerRadius(10)
-                .overlay(RoundedRectangle(cornerRadius: 10)
-                    .stroke(accent.opacity(0.4), lineWidth: 1))
-
-            Text(label)
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
-                .foregroundColor(accent)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(accent.opacity(0.1))
-                .cornerRadius(6)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(10)
-        .background(Color.white)
-        .cornerRadius(12)
-        .overlay(RoundedRectangle(cornerRadius: 12)
-            .stroke(Color.white.opacity(0.8), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
     }
 
     // MARK: - Layer toggle pills
