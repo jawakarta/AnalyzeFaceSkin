@@ -18,16 +18,16 @@ struct HomeView: View {
     // Push navigation path
     @State private var navPath = [AppScreen]()
     
-    // Animation states for Scan Now button
-    @State private var pulseScale1 = 1.0
-    @State private var pulseOpacity1 = 0.5
-    @State private var pulseScale2 = 1.0
-    @State private var pulseOpacity2 = 0.3
-    @State private var pulseScale3 = 1.0
-    @State private var pulseOpacity3 = 0.1
+    // Animation states for Scan button & rings
+    @State private var pulseScale1: CGFloat = 1.0
+    @State private var pulseScale2: CGFloat = 1.0
+    @State private var pulseScale3: CGFloat = 1.0
+    @State private var pulseOpacity1: Double = 1.5
+    @State private var pulseOpacity2: Double = 1.3
+    @State private var pulseOpacity3: Double = 1.1
     
     private var lastScanText: String {
-        guard let lastScan = histories.first else { return "N/A" }
+        guard let lastScan = histories.first else { return "No scans yet" }
         let calendar = Calendar.current
         if calendar.isDateInToday(lastScan.createdAt) {
             return "Today"
@@ -38,23 +38,16 @@ struct HomeView: View {
             return "\(diff) days ago"
         }
     }
-    
-    private var avgScoreText: String {
-        guard !histories.isEmpty else { return "0/100" }
-        let total = histories.reduce(0.0) { $0 + $1.skinTypeConfidence }
-        let avg = Int((total / Double(histories.count)) * 100)
-        return "\(avg)/100"
-    }
 
     var body: some View {
         NavigationStack(path: $navPath) {
             ZStack {
-                // Pastel warm peach to soft lavender gradient background
+                // Subtle warm pink/lavender to white background gradient
                 LinearGradient(
                     colors: [
-                        Color(hex: "F3B8A5"), // Soft Warm Peach
-                        Color(hex: "EBD4E2"), // Pastel Creamy Pink
-                        Color(hex: "D7D3EA")  // Gentle Lavender
+                        Color(hex: "FDF7FB"), // Soft pale rose
+                        Color(hex: "F7F6FD"), // Soft lavender
+                        Color(hex: "FFFFFF")  // Pure white
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -62,95 +55,195 @@ struct HomeView: View {
                 .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    Spacer()
-                    // Centered Animating Scan Button Area
-                    VStack(spacing: 32) {
-                        ZStack {
-                            // Outer Pulsing Ring 3
-                            Circle()
-                                .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
-                                .frame(width: 290, height: 290)
-                                .scaleEffect(pulseScale3)
-                                .opacity(pulseOpacity3)
-                            
-                            // Outer Pulsing Ring 2
-                            Circle()
-                                .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
-                                .frame(width: 250, height: 250)
-                                .scaleEffect(pulseScale2)
-                                .opacity(pulseOpacity2)
-                            
-                            // Outer Pulsing Ring 1
-                            Circle()
-                                .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
-                                .frame(width: 210, height: 210)
-                                .scaleEffect(pulseScale1)
-                                .opacity(pulseOpacity1)
-
-                            // Main Central Button
-                            Button {
-                                navPath.append(.camera)
-                            } label: {
-                                VStack(spacing: 12) {
-                                    Image(systemName: "camera")
-                                        .font(.system(size: 38, weight: .light))
-                                        .foregroundColor(Color(hex: "5A4C47"))
-                                    
-                                    Text("SCAN NOW")
-                                        .font(.system(size: 14, weight: .bold, design: .rounded))
-                                        .foregroundColor(Color(hex: "5A4C47"))
-                                        .tracking(1.5)
-                                }
-                                .frame(width: 176, height: 176)
-                                .background(Color.white)
-                                .clipShape(Circle())
-                                .shadow(color: Color.black.opacity(0.06), radius: 15, x: 0, y: 8)
-                            }
-                        }
-                        .frame(width: 300, height: 300)
-
-                        // Description text below the button
-                        Text("Scan your face to analyze your facial skin condition")
-                            .font(.system(size: 15, weight: .regular, design: .rounded))
-                            .foregroundColor(Color(hex: "6A5D58"))
+                    // ── Header Section ──────────────────────────────────────────
+                    VStack(spacing: 8) {
+                        Text("Good morning,")
+                            .font(.system(size: 18, weight: .medium, design: .default))
+                            .foregroundColor(Color(hex: "757482"))
+                        
+                        Text("Let's take care of your skin.")
+                            .font(.system(size: 24, weight: .bold, design: .default))
+                            .foregroundColor(Color(hex: "1C1B24"))
+                        
+                        Text("Scan your skin to get personalized\ninsights and recommendations.")
+                            .font(.system(size: 14, weight: .regular, design: .default))
+                            .foregroundColor(Color(hex: "8E8D9E"))
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
+                            .padding(.top, 4)
                     }
+                    .padding(.top, 40)
+                    .padding(.horizontal, 24)
 
                     Spacer()
 
-                    // Stats Dashboard Row (3 Cards)
-                    HStack(spacing: 12) {
-                        statCard(value: lastScanText, label: "Last Scan")
-                        statCard(value: "\(histories.count)", label: "Total Scans")
-                        statCard(value: avgScoreText, label: "Avg Score")
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
+                    // ── Central Pulsing Scan Button with concentric dashed rings ──
+                    ZStack {
+                        // Outer Pulsing Ring 3
+                        Circle()
+                            .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
+                            .frame(width: 290, height: 290)
+                            .scaleEffect(pulseScale3)
+                            .opacity(pulseOpacity3)
 
-                    // Bottom History Card
-                    Button {
-                        showHistory = true
-                    } label: {
-                        HStack(spacing: 16) {
-                            // Clock Icon Container
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(hex: "ECEAF8"))
-                                    .frame(width: 44, height: 44)
+                        // Outer Pulsing Ring 2
+                        Circle()
+                            .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
+                            .frame(width: 250, height: 250)
+                            .scaleEffect(pulseScale2)
+                            .opacity(pulseOpacity2)
+
+                        // Outer Pulsing Ring 1
+                        Circle()
+                            .stroke(Color.white.opacity(1.2), lineWidth: 1.5)
+                            .frame(width: 210, height: 210)
+                            .scaleEffect(pulseScale1)
+                            .opacity(pulseOpacity1)
+
+                        // Main central scan button
+                        Button {
+                            navPath.append(.camera)
+                        } label: {
+                            VStack(spacing: 12) {
+                                Image(systemName: "camera")
+                                    .font(.system(size: 36, weight: .light))
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [Color(hex: "E06B92"), Color(hex: "5E52B7")],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
                                 
-                                Image(systemName: "clock")
-                                    .font(.system(size: 20))
+                                Text("Scan Your Skin")
+                                    .font(.system(size: 15, weight: .bold, design: .default))
+                                    .foregroundColor(Color(hex: "1C1B24"))
+                                
+                                Text("Tap to start")
+                                    .font(.system(size: 12, weight: .medium, design: .default))
+                                    .foregroundColor(Color(hex: "8E8D9E"))
+                            }
+                            .frame(width: 200, height: 200)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .shadow(color: Color(hex: "5E52B7").opacity(0.08), radius: 20, x: 0, y: 10)
+                        }
+                    }
+                    .frame(width: 300, height: 300)
+
+                    Spacer()
+
+                    // ── Dashboard Row (Last Scan & Total Scan Cards) ──────────────
+                    HStack(spacing: 16) {
+                        // Card 1: Last Scan
+                        VStack(alignment: .leading, spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(hex: "F0EEFC"))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(Color(hex: "5E52B7"))
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Scan History")
-                                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundColor(Color(hex: "3A2E2B"))
+                                Text(lastScanText)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(Color(hex: "1C1B24"))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.85)
+                                
+                                Text("Last Scan")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(Color(hex: "8E8D9E"))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(20)
+                        .background(Color.white)
+                        .cornerRadius(18)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(Color(hex: "F2F0F7"), lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .overlay(
+                            // Wave decoration at bottom right
+                            Circle()
+                                .fill(Color(hex: "5E52B7").opacity(0.04))
+                                .frame(width: 70, height: 70)
+                                .blur(radius: 12)
+                                .offset(x: 35, y: 35),
+                            alignment: .bottomTrailing
+                        )
+                        .shadow(color: Color.black.opacity(0.015), radius: 10, x: 0, y: 5)
+
+                        // Card 2: Total Scan
+                        VStack(alignment: .leading, spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(hex: "FDF2EC"))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "chart.bar.fill")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(Color(hex: "E58A59"))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(histories.count)")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(Color(hex: "1C1B24"))
+                                
+                                Text("Total Scan")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(Color(hex: "8E8D9E"))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(20)
+                        .background(Color.white)
+                        .cornerRadius(18)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18)
+                                .stroke(Color(hex: "F2F0F7"), lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                        .overlay(
+                            // Wave decoration at bottom right
+                            Circle()
+                                .fill(Color(hex: "E58A59").opacity(0.04))
+                                .frame(width: 70, height: 70)
+                                .blur(radius: 12)
+                                .offset(x: 35, y: 35),
+                            alignment: .bottomTrailing
+                        )
+                        .shadow(color: Color.black.opacity(0.015), radius: 10, x: 0, y: 5)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
+
+                    // ── Bottom History Card ─────────────────────────────────────
+                    Button {
+                        showHistory = true
+                    } label: {
+                        HStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(hex: "EAE8FA"))
+                                    .frame(width: 44, height: 44)
+                                
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(Color(hex: "5E52B7"))
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("History")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundColor(Color(hex: "1C1B24"))
                                 Text("View past analyses")
-                                    .font(.system(size: 13, weight: .regular, design: .rounded))
-                                    .foregroundColor(Color(hex: "75635F"))
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundColor(Color(hex: "8E8D9E"))
                             }
                             
                             Spacer()
@@ -161,10 +254,14 @@ struct HomeView: View {
                         }
                         .padding(16)
                         .background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 4)
+                        .cornerRadius(16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(Color(hex: "F2F0F7"), lineWidth: 1)
+                        )
+                        .shadow(color: Color.black.opacity(0.015), radius: 10, x: 0, y: 5)
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 24)
                     .padding(.bottom, 24)
                 }
             }
@@ -196,39 +293,23 @@ struct HomeView: View {
                     showAgreement = true
                 }
                 
-                // Start pulsing animations
-                withAnimation(Animation.easeOut(duration: 2.0).repeatForever(autoreverses: false)) {
+                // Radiating pulse waves (from 1.0 to 1.35 scale, opacity fades to 0.0)
+                withAnimation(Animation.easeOut(duration: 2.2).repeatForever(autoreverses: false)) {
                     pulseScale1 = 1.35
                     pulseOpacity1 = 0.0
                 }
                 
-                withAnimation(Animation.easeOut(duration: 2.0).delay(0.65).repeatForever(autoreverses: false)) {
+                withAnimation(Animation.easeOut(duration: 2.2).delay(0.7).repeatForever(autoreverses: false)) {
                     pulseScale2 = 1.35
                     pulseOpacity2 = 0.0
                 }
+                
+                withAnimation(Animation.easeOut(duration: 2.2).delay(1.4).repeatForever(autoreverses: false)) {
+                    pulseScale3 = 1.35
+                    pulseOpacity3 = 0.0
+                }
             }
         }
-    }
-
-    @ViewBuilder
-    private func statCard(value: String, label: String) -> some View {
-        VStack(spacing: 6) {
-            Text(value)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundColor(Color(hex: "3A2E2B"))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            
-            Text(label)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundColor(Color(hex: "75635F"))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
-        .padding(.horizontal, 8)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 4)
     }
 }
 
