@@ -18,8 +18,17 @@ class CameraViewModel: ObservableObject {
     @Published var permissionDenied = false
     @Published var lightingCondition: LightingCondition = .unknown
     @Published var isFlashOn = false
+    @Published var capturedFaceLandmarks: [String: [CGPoint]] = [:]
+    @Published var showNoFaceAlert = false
+    @Published var analysisResult: SkinAnalysisResult? = nil
+    @Published var isAnalyzing = false
+    @Published var analysisError: String? = nil
+    @Published var showAnalysisErrorAlert = false
+    @Published var grayscalePreview: UIImage? = nil
+    @Published var clahePreview: UIImage? = nil
 
     let cameraService = CameraService()
+    private let skinAnalysisService = SkinAnalysisService()
     private let visionService = VisionService()
     private let voiceService = VoiceGuideService()
     private let photoService = PhotoLibraryService()
@@ -47,6 +56,12 @@ class CameraViewModel: ObservableObject {
     }
 
     func capturePhoto() {
+        // Only allow capturing if a face is detected in the preview frame
+        guard faceState.isDetected else {
+            print("Capture rejected: No face detected in preview")
+            return
+        }
+        
         guard case .capturing = captureState else {
             captureState = .capturing
             captureBoundingBox = lastFaceBoundingBox
@@ -56,9 +71,15 @@ class CameraViewModel: ObservableObject {
     }
 
     func importPhoto(from image: UIImage) {
-        let cropped = visionService.cropFace(from: image) ?? image
-        capturedImage = cropped
-        captureState = .captured(cropped)
+        if let processed = visionService.processFace(from: image) {
+            capturedImage = processed.croppedImage
+            capturedFaceLandmarks = processed.landmarks
+            captureState = .captured(processed.croppedImage)
+            cameraService.stop()
+        } else {
+            showNoFaceAlert = true
+            reset()
+        }
     }
 
     func savePhoto() {
@@ -66,14 +87,55 @@ class CameraViewModel: ObservableObject {
         photoService.save(image)
     }
 
+    func startScanning() {
+        guard let image = capturedImage else { return }
+        captureState = .scanning(image)
+        cameraService.stop()
+        
+        isAnalyzing = true
+        analysisResult = nil
+        analysisError = nil
+        grayscalePreview = nil
+        clahePreview = nil
+        
+        let startTime = Date()
+        skinAnalysisService.analyze(image: image) { [weak self] result in
+            let elapsed = Date().timeIntervalSince(startTime)
+            let minimumDuration: TimeInterval = 3.0
+            let delay = max(0, minimumDuration - elapsed)
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                self?.isAnalyzing = false
+                switch result {
+                case .success(let output):
+                    self?.analysisResult = output.result
+                    self?.grayscalePreview = output.grayscalePreview
+                    self?.clahePreview = output.clahePreview
+                    self?.captureState = .result(image, output.result)
+                case .failure(let error):
+                    print("Skin analysis failed: \(error.localizedDescription)")
+                    self?.analysisError = error.localizedDescription
+                    self?.showAnalysisErrorAlert = true
+                    self?.reset()
+                }
+            }
+        }
+    }
+
     func reset() {
         capturedImage = nil
+        capturedFaceLandmarks = [:]
         captureState = .idle
         stabilityStartTime = nil
         captureProgress = 0
         captureBoundingBox = nil
         lastFaceBoundingBox = nil
         stopStabilityTimer()
+        analysisResult = nil
+        isAnalyzing = false
+        grayscalePreview = nil
+        clahePreview = nil
+        cameraService.start()
     }
 
     func toggleFlash() {
@@ -153,6 +215,9 @@ class CameraViewModel: ObservableObject {
 
 extension CameraViewModel: CameraServiceDelegate {
     func cameraService(_ service: CameraService, didUpdateFrame sampleBuffer: CMSampleBuffer) {
+        // Only analyze frames and play voice guides when in idle scanning phase
+        guard captureState == .idle else { return }
+        
         let state = visionService.detectFace(in: sampleBuffer)
         var mutableState = state
         if state.isDetected {
@@ -187,12 +252,18 @@ extension CameraViewModel: CameraServiceDelegate {
 
     func cameraService(_ service: CameraService, didCapturePhoto image: UIImage, previewImage: UIImage?) {
         let cropSource = previewImage ?? image
-        let cropped = visionService.cropFace(from: cropSource, using: captureBoundingBox) ?? image
-        captureBoundingBox = nil
-        capturedImage = cropped
-        captureState = .captured(cropped)
+        if let processed = visionService.processFace(from: cropSource, using: captureBoundingBox) {
+            captureBoundingBox = nil
+            capturedImage = processed.croppedImage
+            capturedFaceLandmarks = processed.landmarks
+            voiceService.speak("Perfect")
+            captureState = .captured(processed.croppedImage)
+        } else {
+            captureBoundingBox = nil
+            showNoFaceAlert = true
+            reset()
+        }
         stopStabilityTimer()
-        voiceService.speak("Perfect")
     }
 
     func cameraService(_ service: CameraService, didFailWith error: Error) {

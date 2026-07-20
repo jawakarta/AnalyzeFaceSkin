@@ -6,12 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct AnalyzeFaceSkinApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SplashView()
         }
+        .modelContainer(for: SkinAnalysisHistory.self)
     }
 }

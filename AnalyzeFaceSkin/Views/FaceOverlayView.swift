@@ -13,14 +13,8 @@ struct FaceOverlayView: View {
     let progress: Double
 
     var body: some View {
-        ZStack {
-            OvalShape()
-                .stroke(ovalColor, lineWidth: 3)
-                .frame(width: 250, height: 320)
-
-            ProgressRingView(progress: progress)
-                .frame(width: 280, height: 350)
-        }
+        ProgressRingView(progress: progress)
+            .frame(width: 250, height: 320)
     }
 }
 
