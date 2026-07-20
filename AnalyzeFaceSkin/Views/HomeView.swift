@@ -173,7 +173,7 @@ struct HomeView: View {
                 case .camera:
                     ContentView(navPath: $navPath)
                         .navigationBarBackButtonHidden(true)
-                case .result(let image, let result, let grayscale, let clahe):
+                case .result(_, let image, let result, let grayscale, let clahe):
                     SkinAnalysisResultView(
                         image:            image,
                         result:           result,
@@ -235,7 +235,8 @@ struct HomeView: View {
 // Push navigation destinations
 enum AppScreen: Hashable {
     case camera
-    case result(image: UIImage,
+    case result(id: UUID = UUID(),
+                image: UIImage,
                 result: SkinAnalysisResult,
                 grayscalePreview: UIImage?,
                 clahePreview: UIImage?)
@@ -244,10 +245,9 @@ enum AppScreen: Hashable {
         switch self {
         case .camera:
             hasher.combine(0)
-        case .result(let image, let result, _, _):
+        case .result(let id, _, _, _, _):
             hasher.combine(1)
-            hasher.combine(image.pngData()?.count ?? 0)
-            hasher.combine(result)
+            hasher.combine(id)
         }
     }
     
@@ -255,8 +255,8 @@ enum AppScreen: Hashable {
         switch (lhs, rhs) {
         case (.camera, .camera):
             return true
-        case (.result(let img1, let res1, _, _), .result(let img2, let res2, _, _)):
-            return img1 == img2 && res1 == res2
+        case (.result(let id1, _, _, _, _), .result(let id2, _, _, _, _)):
+            return id1 == id2
         default:
             return false
         }
