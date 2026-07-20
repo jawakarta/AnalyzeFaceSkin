@@ -8,7 +8,6 @@
 import SwiftUI
 import SwiftData
 
-// MARK: - Condition toggle state
 
 private enum ConditionLayer: String, CaseIterable {
     case acne = "Acne"
@@ -18,7 +17,6 @@ private enum ConditionLayer: String, CaseIterable {
     var icon: String { "allergens" }
 }
 
-// MARK: - Main view
 
 struct SkinAnalysisResultView: View {
     let image:            UIImage
@@ -29,7 +27,9 @@ struct SkinAnalysisResultView: View {
     let onDone:           () -> Void
 
     @Environment(\.modelContext) private var modelContext
-    @State private var visibleLayers: Set<ConditionLayer> = Set(ConditionLayer.allCases)
+    @Environment(\.dismiss) private var dismiss
+    @State private var navigateToAcneDetail = false
+    @State private var hasSavedHistory = false
 
     var body: some View {
         ZStack {
@@ -45,340 +45,318 @@ struct SkinAnalysisResultView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                headerView
-
+                topBarView
+                
                 ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 24) {
+                    VStack(alignment: .leading, spacing: 24) {
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Your Skintuation")
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(.black)
+                            
+                            Text("Here's what we found from your scan.")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.horizontal, 20)
+                        
                         annotatedImageSection
                             .padding(.horizontal, 20)
 
-                        layerToggleRow
+                        skinSummaryCard
                             .padding(.horizontal, 20)
 
-                        VStack(spacing: 16) {
-                            skinTypeCard
-                            conditionsSection
-                        }
-                        .padding(.horizontal, 20)
-
+                        findingsSection
+                            .padding(.horizontal, 20)
+                        
                         if !isFromHistory {
-                            doneButton
-                                .padding(.vertical, 20)
+                            backToHomeButton
+                                .padding(.horizontal, 20)
+                                .padding(.top, 8)
+                                .padding(.bottom, 20)
                         }
                     }
-                    .padding(.top, 16)
+                    .padding(.top, 12)
                 }
             }
         }
-    }
-
-    // MARK: - Header
-
-    private var headerView: some View {
-        VStack(spacing: 4) {
-            Text("ANALYSIS REPORT")
-                .font(.system(.caption, design: .monospaced))
-                .foregroundColor(Color(hex: "75635F"))
-                .bold()
-                .tracking(3)
-            Text("Your Skin Health")
-                .font(.system(.title3, design: .rounded))
-                .bold()
-                .foregroundColor(Color(hex: "3A2E2B"))
+        .navigationDestination(isPresented: $navigateToAcneDetail) {
+            AcneDetailView(spotCount: result.acneBoundingBoxes.count)
         }
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .background(Color.white.opacity(0.15))
-        .overlay(Rectangle().fill(Color.black.opacity(0.06)).frame(height: 1),
-                 alignment: .bottom)
+        .navigationBarHidden(true)
+        .onAppear {
+            saveToHistory()
+        }
     }
 
-    // MARK: - Annotated image with bounding box overlay
+
+    private var topBarView: some View {
+        HStack {
+            Button(action: {
+                if isFromHistory {
+                    dismiss()
+                } else {
+                    saveToHistory()
+                    onDone()
+                }
+            }) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.black)
+                    .frame(width: 38, height: 38)
+                    .background(Color.white)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+    }
+
+
+    private var spotCountText: String {
+        let count = result.acneBoundingBoxes.count
+        return "\(count) \(count == 1 ? "spot" : "spots")"
+    }
 
     private var annotatedImageSection: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let imgSize = image.size
-            let ratio   = imgSize.height / max(imgSize.width, 1)
-            let h       = w * ratio
-
-            ZStack(alignment: .topLeading) {
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.black.opacity(0.06), lineWidth: 1)
-                    )
-
-                ForEach(ConditionLayer.allCases, id: \.self) { layer in
-                    if visibleLayers.contains(layer) {
-                        let boxes = boundingBoxes(for: layer)
-                        ForEach(boxes.indices, id: \.self) { idx in
-                            let box = boxes[idx]
-                            BoundingBoxView(
-                                box:        box,
-                                color:      layer.color,
-                                label:      layer.rawValue,
-                                confidence: result.acneConfidence,
-                                imageSize:  CGSize(width: w, height: h)
-                            )
+        ZStack(alignment: .bottomLeading) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFit()
+                .cornerRadius(24)
+                .overlay(
+                    GeometryReader { geo in
+                        let w = geo.size.width
+                        let h = geo.size.height
+                        ZStack(alignment: .topLeading) {
+                            let boxes = result.acneBoundingBoxes
+                            ForEach(boxes.indices, id: \.self) { idx in
+                                let box = boxes[idx]
+                                let pixelRect = CGRect(
+                                    x: box.x * w,
+                                    y: box.y * h,
+                                    width: box.width * w,
+                                    height: box.height * h
+                                )
+                                Circle()
+                                    .fill(Color.red.opacity(0.6))
+                                    .frame(width: 24, height: 24)
+                                    .overlay(Circle().fill(Color.red).frame(width: 10, height: 10))
+                                    .position(x: pixelRect.midX, y: pixelRect.midY)
+                            }
                         }
                     }
-                }
-            }
-            .frame(width: w, height: h)
-        }
-        .aspectRatio(image.size.width / max(image.size.height, 1), contentMode: .fit)
-        .shadow(color: Color.cyan.opacity(0.15), radius: 12)
-    }
-
-    // MARK: - Layer toggle pills
-
-    private var layerToggleRow: some View {
-        let hasAcne = !result.acneBoundingBoxes.isEmpty
-
-        return HStack(spacing: 10) {
-            if hasAcne {
-                let active = visibleLayers.contains(.acne)
-                Button {
-                    if active { visibleLayers.remove(.acne) }
-                    else      { visibleLayers.insert(.acne) }
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: ConditionLayer.acne.icon)
-                            .font(.system(size: 11))
-                        Text(ConditionLayer.acne.rawValue)
-                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                    }
-                    .foregroundColor(active ? .black : ConditionLayer.acne.color)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(active ? ConditionLayer.acne.color : ConditionLayer.acne.color.opacity(0.08))
-                    .cornerRadius(20)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(ConditionLayer.acne.color.opacity(active ? 0 : 0.4), lineWidth: 1)
-                    )
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
-    }
-
-    // MARK: - Skin Type card
-
-    private var skinTypeCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Skin Type", systemImage: "drop.fill")
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(Color(hex: "5E52B7"))
-                    .bold()
-                Spacer()
-                if let conf = result.skinTypeConfidence {
-                    Text(String(format: "%.0f%% Match", conf * 100))
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(Color(hex: "E95B82"))
-                        .bold()
-                }
-            }
-
-            let type = result.skinType ?? "Unknown"
-            Text(type.capitalized)
-                .font(.system(.title2, design: .rounded))
-                .bold()
-                .foregroundColor(Color(hex: "3A2E2B"))
-
-            Text(descriptionForType(type))
-                .font(.system(.footnote, design: .rounded))
-                .foregroundColor(Color(hex: "75635F"))
-                .lineLimit(nil)
-        }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(16)
-        .overlay(RoundedRectangle(cornerRadius: 16)
-            .stroke(Color.white.opacity(0.8), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
-    }
-
-    // MARK: - Conditions section
-
-    private var conditionsSection: some View {
-        VStack(spacing: 12) {
-            Text("CONDITION SCAN")
-                .font(.system(.caption, design: .monospaced))
-                .foregroundColor(Color(hex: "75635F"))
-                .bold()
-                .tracking(2)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            let hasAcne = !result.acneBoundingBoxes.isEmpty
-
-            if hasAcne {
-                conditionRow(
-                    layer: .acne,
-                    count: result.acneBoundingBoxes.count,
-                    level: result.acneLevel,
-                    description: "Inflammatory lesions or comedones detected on skin surface."
                 )
-            } else {
-                HStack(spacing: 16) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundColor(.green)
-                        .font(.title2)
+            
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 8, height: 8)
+                
+                Text("\(spotCountText) detected")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.black)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.white)
+            .cornerRadius(20)
+            .padding([.leading, .bottom], 16)
+        }
+        .shadow(color: Color.black.opacity(0.06), radius: 10, y: 4)
+    }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("All Clear!")
-                            .font(.system(.subheadline, design: .rounded))
-                            .bold()
-                            .foregroundColor(Color(hex: "3A2E2B"))
 
-                        Text("No significant acne detected on your skin.")
-                            .font(.system(.caption, design: .rounded))
-                            .foregroundColor(Color(hex: "75635F"))
-                            .lineLimit(nil)
+    private var skinSummaryCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 6) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 14))
+                    .foregroundColor(.orange)
+                
+                Text("Your Skin Summary")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+            }
+            
+            let type = result.skinType ?? "Unknown"
+            let count = result.acneBoundingBoxes.count
+            let acneText: String = {
+                if count == 0 {
+                    return "without significant acne spots"
+                } else if count == 1 {
+                    return "with 1 visible acne spot"
+                } else {
+                    return "with \(count) visible acne spots"
+                }
+            }()
+            
+            Text("Your scan shows an \(type.lowercased()) skin type \(acneText). With the right care, your skin can look clearer and healthier.")
+                .font(.subheadline)
+                .foregroundColor(.black.opacity(0.7))
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            HStack(spacing: 16) {
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle().fill(Color.blue.opacity(0.1)).frame(width: 36, height: 36)
+                        Image(systemName: "drop.fill").foregroundColor(.blue).font(.system(size: 14))
                     }
-                    Spacer()
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Skin Type").font(.system(size: 10)).foregroundColor(.gray)
+                        Text(type.capitalized).font(.system(size: 14, weight: .bold)).foregroundColor(.black)
+                    }
                 }
-                .padding()
-                .background(Color.white)
-                .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.green.opacity(0.3), lineWidth: 1))
-                .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func conditionRow(
-        layer: ConditionLayer,
-        count: Int,
-        level: String?,
-//        confidence: Double?,
-        description: String
-    ) -> some View {
-        let levelText = level ?? "Unknown"
-
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(layer.color)
-                    .frame(width: 4, height: 24)
-
-                Image(systemName: layer.icon)
-                    .foregroundColor(layer.color)
-                    .frame(width: 18)
-
-                Text(layer.rawValue)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(Color(hex: "3A2E2B"))
-                    .bold()
-
-                if count > 0 {
-                    Text("\(count) region\(count > 1 ? "s" : "")")
-                        .font(.system(size: 10, weight: .medium, design: .monospaced))
-                        .foregroundColor(layer.color.opacity(0.9))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
-                        .background(layer.color.opacity(0.12))
-                        .cornerRadius(8)
+                
+                HStack(spacing: 10) {
+                    ZStack {
+                        Circle().fill(Color.red.opacity(0.1)).frame(width: 36, height: 36)
+                        Circle().fill(Color.red).frame(width: 12, height: 12)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Acne").font(.system(size: 10)).foregroundColor(.gray)
+                        Text(spotCountText).font(.system(size: 14, weight: .bold)).foregroundColor(.black)
+                    }
                 }
-
-                Spacer()
-
-//                if let conf = confidence {
-//                    Text(String(format: "%.0f%%", conf * 100))
-//                        .font(.system(.caption, design: .monospaced))
-//                        .foregroundColor(Color(hex: "5E52B7"))
-//                        .bold()
-//                }
-
-                Text(levelText.uppercased())
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundColor(badgeColor(for: levelText))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(badgeColor(for: levelText).opacity(0.15))
-                    .cornerRadius(6)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(badgeColor(for: levelText).opacity(0.4), lineWidth: 1)
-                    )
             }
-
-            Text(description)
-                .font(.system(.caption, design: .rounded))
-                .foregroundColor(Color(hex: "75635F"))
+            .padding(.top, 4)
         }
-        .padding()
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14)
-            .stroke(Color.white.opacity(0.8), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.02), radius: 8, x: 0, y: 4)
+        .cornerRadius(24)
+        .shadow(color: Color.black.opacity(0.02), radius: 8, y: 4)
     }
 
-    // MARK: - Done button
 
-    private var doneButton: some View {
-        Button {
+    private var findingsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Findings")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.black)
+            
+            let type = result.skinType ?? "Unknown"
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle().fill(Color.blue.opacity(0.08)).frame(width: 44, height: 44)
+                    Image(systemName: "drop.fill").foregroundColor(.blue).font(.title3)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Skin Type").font(.caption).foregroundColor(.gray)
+                    Text(type.capitalized).font(.body).fontWeight(.bold).foregroundColor(.black)
+                    Text(descriptionForType(type)).font(.caption).foregroundColor(.gray)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold)).foregroundColor(.gray)
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(16)
+            
+            let count = result.acneBoundingBoxes.count
+            let acneDescText: String = {
+                if count == 0 {
+                    return "No visible acne spots detected on your skin."
+                } else if count == 1 {
+                    return "1 visible acne spot detected on your skin."
+                } else {
+                    return "\(count) visible acne spots detected on your skin."
+                }
+            }()
+            
+            let acneCard = HStack(spacing: 16) {
+                ZStack {
+                    Circle().fill(Color.red.opacity(0.08)).frame(width: 44, height: 44)
+                    Circle().fill(Color.red).frame(width: 14, height: 14)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Acne").font(.caption).foregroundColor(.gray)
+                    Text(spotCountText).font(.body).fontWeight(.bold).foregroundColor(.black)
+                    Text(acneDescText).font(.caption).foregroundColor(.gray)
+                }
+                Spacer()
+                if count > 0 {
+                    Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold)).foregroundColor(.gray)
+                }
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(16)
+            
+            if count > 0 {
+                Button(action: {
+                    navigateToAcneDetail = true
+                }) {
+                    acneCard
+                }
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                acneCard
+            }
+            
+            HStack(spacing: 12) {
+                Image(systemName: "lightbulb")
+                    .foregroundColor(.orange)
+                    .font(.system(size: 18))
+                Text("Tip: Tap any finding to learn more and get personalized skin tips.")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .lineSpacing(3)
+            }
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+        }
+    }
+
+
+    private var backToHomeButton: some View {
+        Button(action: {
             saveToHistory()
             onDone()
-        } label: {
-            Text("Back to home")
-                .font(.system(.headline, design: .rounded))
-                .bold()
+        }) {
+            Text("Back to Home")
+                .font(.body)
+                .fontWeight(.semibold)
                 .foregroundColor(.white)
-                .frame(width: 220)
-                .padding(.vertical, 14)
-                .background(LinearGradient(
-                    colors: [Color(hex: "5E52B7"), Color(hex: "E95B82")],
-                    startPoint: .topLeading, endPoint: .bottomTrailing))
-                .cornerRadius(25)
-                .shadow(color: Color(hex: "E95B82").opacity(0.2), radius: 10, x: 0, y: 5)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color(red: 0.11, green: 0.11, blue: 0.14))
+                .cornerRadius(28)
         }
     }
 
-    // MARK: - Save to history
 
     private func saveToHistory() {
-        guard let skinType = result.skinType else { return }
+        guard !isFromHistory, !hasSavedHistory, let skinType = result.skinType else { return }
+        hasSavedHistory = true
         let imageData = image.jpegData(compressionQuality: 0.6)
         let history = SkinAnalysisHistory(
             skinType: skinType,
             skinTypeConfidence: result.skinTypeConfidence ?? 0,
+            acneSpotCount: result.acneBoundingBoxes.count,
+            acneBoundingBoxes: result.acneBoundingBoxes,
             imageData: imageData
         )
         modelContext.insert(history)
         try? modelContext.save()
     }
 
-    // MARK: - Helpers
-
-    private func boundingBoxes(for layer: ConditionLayer) -> [SkinBoundingBox] {
-        switch layer {
-        case .acne: return result.acneBoundingBoxes
-        }
-    }
-
-    private func badgeColor(for level: String) -> Color {
-        switch level.lowercased() {
-        case "severe", "high":   return .red
-        case "moderate": return .orange
-        default:         return .green
-        }
-    }
-
     private func descriptionForType(_ type: String) -> String {
         switch type.lowercased() {
-        case "oily":    return "Excess sebum makes skin shiny, especially in T-zone. Pores may be enlarged."
-        case "dry":     return "Less sebum than normal — skin may feel tight or flaky. Needs intense hydration."
-        case "normal":  return "Balanced skin with fine pores and no extreme oil or dryness."
-        default:        return "Skin analyzed from visual patterns detected by our AI."
+        case "oily":    return "Produces more oil than average."
+        case "dry":     return "Produces less oil than average."
+        case "normal":  return "Balanced hydration level."
+        default:        return "Analyzed vision patterns."
         }
     }
 }
@@ -402,7 +380,6 @@ private struct BoundingBoxView: View {
 
     var body: some View {
         ZStack(alignment: .topLeading) {
-            // ── 1. Instance Segmentation Mask Polygon ────────────────────────
             if let pts = box.polygonPoints, !pts.isEmpty {
                 Path { path in
                     guard let first = pts.first else { return }
@@ -414,19 +391,16 @@ private struct BoundingBoxView: View {
                 }
                 .fill(color.opacity(0.35))
             } else {
-                // Fallback to bounding box fill
                 color.opacity(0.15)
                     .frame(width: pixelRect.width, height: pixelRect.height)
                     .position(x: pixelRect.midX, y: pixelRect.midY)
             }
 
-            // ── 2. Bounding Box Border ───────────────────────────────────────
             RoundedRectangle(cornerRadius: 6)
                 .stroke(color, lineWidth: 1.5)
                 .frame(width: pixelRect.width, height: pixelRect.height)
                 .position(x: pixelRect.midX, y: pixelRect.midY)
 
-            // ── 3. Confidence Score Pill (Premium styling matching YOLO) ─────
             let scoreVal = confidence ?? 0.86
             let labelText = String(format: "%.2f", scoreVal)
             
@@ -443,7 +417,6 @@ private struct BoundingBoxView: View {
     }
 }
 
-// MARK: - Preview
 
 #Preview {
     SkinAnalysisResultView(

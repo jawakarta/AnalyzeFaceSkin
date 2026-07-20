@@ -43,7 +43,7 @@ struct HistoryView: View {
                                             skinTypeConfidence: history.skinTypeConfidence,
                                             acneLevel:         nil,
                                             acneConfidence:    nil,
-                                            acneBoundingBoxes: []
+                                            acneBoundingBoxes: history.acneBoundingBoxes
                                         ),
                                         grayscalePreview: nil,
                                         clahePreview:     nil,
