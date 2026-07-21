@@ -17,19 +17,25 @@ struct FaceScanningView: View {
     @State private var meshOpacity: Double = 0.0
     
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             // Scanning Status Indicator
             HStack(spacing: 8) {
                 Circle()
-                    .fill(isAnalyzing ? Color.pink : Color.green)
+                    .fill(
+                        isAnalyzing ? Color.pink :
+                        (analysisResult != nil ? Color.green : Color.pink)
+                    )
                     .frame(width: 8, height: 8)
                     .opacity(isAnalyzing ? (meshOpacity > 0 ? meshOpacity : 0.3) : 1.0)
                 
-                Text(isAnalyzing ? "Scanning your skin..." : "Skin Analysis Complete")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(.white)
-                    .bold()
-                    .tracking(2)
+                Text(
+                    isAnalyzing ? "Scanning your skin..." :
+                    (analysisResult != nil ? "Skin Analysis Complete" : "Face Aligned & Ready")
+                )
+                .font(.system(.caption, design: .monospaced))
+                .foregroundColor(.white)
+                .bold()
+                .tracking(2)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
@@ -37,93 +43,148 @@ struct FaceScanningView: View {
             .cornerRadius(20)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(isAnalyzing ? Color.pink.opacity(0.5) : Color.green.opacity(0.5), lineWidth: 1)
-            )
-            .shadow(color: isAnalyzing ? Color.pink.opacity(0.3) : Color.green.opacity(0.3), radius: 6)
-            
-            // Image with Scan Overlays
-            ZStack {
-                // Face image (cropped with padding)
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .cornerRadius(16)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.15), lineWidth: 2)
+                    .stroke(
+                        isAnalyzing || analysisResult == nil ? Color.pink.opacity(0.5) : Color.green.opacity(0.5),
+                        lineWidth: 1
                     )
-                
-                // Overlay Effects
-                GeometryReader { geo in
-                    let size = geo.size
-                    
-                    // 1. Tech Corner Brackets
-                    CornerBracketsShape()
-                        .stroke(Color.cyan.opacity(0.8), lineWidth: 2)
-                        .padding(10)
-                    
-                    // 2. High-Tech Padded Face Mesh (Jaring-jaring) using actual detected face features
-                    if !landmarks.isEmpty {
-                        ActualFaceMeshShape(landmarks: landmarks)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.cyan.opacity(0.7),
-                                        Color.pink.opacity(0.7)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                ),
-                                lineWidth: 1.5
-                            )
-                            .opacity(meshOpacity)
-                            .glow(color: Color.cyan.opacity(0.3), radius: 4)
-                        
-                        // 3. Glowing Face Mesh Nodes (Intersection Points)
-                        FaceMeshNodesView(landmarks: landmarks, size: size)
-                            .opacity(meshOpacity)
-                    }
-                    
-                    // 4. Scanning Laser Sweep Line
-                    if isAnalyzing {
-                        ZStack {
-                            // Trail glow
-                            Rectangle()
-                                .fill(
+            )
+            .shadow(
+                color: isAnalyzing || analysisResult == nil ? Color.pink.opacity(0.3) : Color.green.opacity(0.3),
+                radius: 6
+            )
+            
+            // Oval Face Container with Glowing Light Overlays
+            ZStack {
+                // 1. Soft Ambient Light Aura behind Oval
+                Ellipse()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.pink.opacity(0.35),
+                                Color(hex: "E5B4D6").opacity(0.2),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 30,
+                            endRadius: 130
+                        )
+                    )
+                    .blur(radius: 14)
+                    .scaleEffect(1.15)
+
+                // 2. Outer Tech Corner Brackets around Oval Area
+                CornerBracketsShape()
+                    .stroke(Color.pink.opacity(0.4), lineWidth: 1.5)
+                    .padding(-10)
+
+                // 3. Pulsing Outer Glow Ring
+                Ellipse()
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.pink.opacity(0.8), Color(hex: "E5B4D6").opacity(0.5)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2
+                    )
+                    .scaleEffect(1.03)
+                    .blur(radius: 3)
+                    .opacity(isAnalyzing ? (meshOpacity > 0 ? meshOpacity : 0.4) : 0.8)
+
+                // 4. Main Glowing Oval Ring Frame with Neon Highlights
+                Ellipse()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.pink,
+                                Color(hex: "E5B4D6"),
+                                Color(hex: "4d3865").opacity(0.8),
+                                Color.pink
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 3
+                    )
+                    .shadow(color: Color.pink.opacity(0.6), radius: 8)
+                    .shadow(color: Color(hex: "E5B4D6").opacity(0.7), radius: 4)
+                    .shadow(color: Color.pink.opacity(0.3), radius: 16)
+
+                // 5. Clipped Face Image & Overlays
+                ZStack {
+                    // Face image cropped to oval shape
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+
+                    // Overlay Effects inside Oval
+                    GeometryReader { geo in
+                        let size = geo.size
+
+                        // High-Tech Face Mesh (Jaring-jaring)
+                        if !landmarks.isEmpty {
+                            ActualFaceMeshShape(landmarks: landmarks)
+                                .stroke(
                                     LinearGradient(
                                         colors: [
-                                            Color.pink.opacity(0.2),
-                                            Color.pink.opacity(0.0)
+                                            Color.pink.opacity(0.9),
+                                            Color(hex: "E5B4D6").opacity(0.7)
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
-                                    )
+                                    ),
+                                    lineWidth: 1.5
                                 )
-                                .frame(height: 50)
-                            
-                            // Laser core
-                            Rectangle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.cyan,
-                                            Color.pink,
-                                            Color.cyan
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(height: 3)
-                                .shadow(color: Color.pink, radius: 8)
+                                .opacity(meshOpacity)
+                                .glow(color: Color.pink.opacity(0.4), radius: 4)
+
+                            // Glowing Face Mesh Nodes (Intersection Points)
+                            FaceMeshNodesView(landmarks: landmarks, size: size)
+                                .opacity(meshOpacity)
                         }
-                        .frame(width: size.width)
-                        .position(x: size.width / 2, y: scanProgress * size.height)
+
+                        // Scanning Laser Sweep Line
+                        if isAnalyzing {
+                            ZStack {
+                                // Trail glow
+                                Rectangle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.pink.opacity(0.25),
+                                                Color.pink.opacity(0.0)
+                                            ],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                                    .frame(height: 50)
+
+                                // Laser core
+                                Rectangle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.pink.opacity(0.8),
+                                                Color(hex: "E5B4D6"),
+                                                Color.pink.opacity(0.8)
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .frame(height: 3)
+                                    .shadow(color: Color.pink, radius: 8)
+                            }
+                            .frame(width: size.width)
+                            .position(x: size.width / 2, y: scanProgress * size.height)
+                        }
                     }
                 }
+                .clipShape(Ellipse())
             }
-            .frame(maxWidth: .infinity, maxHeight: 420)
-            .padding(.horizontal, 20)
+            .frame(width: 235, height: 305)
+            .padding(.vertical, 6)
             
             // Result Card
             if let result = analysisResult, let type = result.skinType {
@@ -132,7 +193,7 @@ struct FaceScanningView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("SKIN TYPE DETECTED")
                                 .font(.system(.caption, design: .monospaced))
-                                .foregroundColor(.cyan)
+                                .foregroundColor(.pink)
                                 .bold()
                                 .tracking(2)
                             
@@ -167,7 +228,7 @@ struct FaceScanningView: View {
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(
                                         LinearGradient(
-                                            colors: [Color.cyan.opacity(0.3), Color.pink.opacity(0.3)],
+                                            colors: [Color.pink.opacity(0.5), Color(hex: "E5B4D6").opacity(0.3)],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         ),
@@ -175,7 +236,7 @@ struct FaceScanningView: View {
                                     )
                             )
                     )
-                    .shadow(color: Color.cyan.opacity(0.1), radius: 10, x: 0, y: 5)
+                    .shadow(color: Color.pink.opacity(0.15), radius: 10, x: 0, y: 5)
                 }
                 .padding(.horizontal, 20)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -372,10 +433,10 @@ struct FaceMeshNodesView: View {
                 ForEach(0..<points.count, id: \.self) { idx in
                     let pos = points[idx]
                     Circle()
-                        .fill(Color.cyan)
+                        .fill(Color.pink)
                         .frame(width: 4, height: 4)
                         .position(x: pos.x * size.width, y: pos.y * size.height)
-                        .shadow(color: Color.cyan, radius: 4)
+                        .shadow(color: Color.pink, radius: 4)
                 }
             }
         }

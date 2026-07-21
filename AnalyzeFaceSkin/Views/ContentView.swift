@@ -37,8 +37,8 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
                 .overlay {
-                    VStack {
-                        Spacer()
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 16)
 
                         FaceScanningView(
                             image: image,
@@ -47,50 +47,55 @@ struct ContentView: View {
                             isAnalyzing: false
                         )
 
-                        HStack(spacing: 16) {
-                            Button("Retake") {
-                                viewModel.reset()
-                            }
-                            .foregroundColor(Color(hex: "3A2E2B"))
-                            .font(.system(.subheadline, design: .rounded))
-                            .bold()
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.6))
-                            .cornerRadius(20)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .stroke(Color.white.opacity(0.8), lineWidth: 1)
-                            )
-                            .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
+                        VStack(spacing: 8) {
+                            Text("You’re ready to go!")
+                                .font(.system(.title2, design: .rounded))
+                                .bold()
+                                .foregroundColor(Color(hex: "3A2E2B"))
 
+                            Text("We’ve captured your skin.\nLet’s analyze your results.")
+                                .font(.system(.subheadline, design: .rounded))
+                                .multilineTextAlignment(.center)
+                                .foregroundColor(Color(hex: "75635F"))
+                                .lineSpacing(3)
+                        }
+                        .padding(.top, 28)
+
+                        Spacer(minLength: 20)
+
+                        VStack(spacing: 16) {
+                            // Analyze Now Button (Primary, placed on top)
                             Button {
                                 viewModel.startScanning()
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "sparkles")
                                         .font(.system(size: 16, weight: .semibold))
-                                    Text("Analyze")
+                                    Text("Analyze Now")
                                         .font(.system(.subheadline, design: .rounded))
                                         .bold()
                                 }
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 12)
-                                .background(
-                                    LinearGradient(
-                                        colors: [Color(hex: "5E52B7"), Color(hex: "E95B82")],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .cornerRadius(20)
-                                .shadow(color: Color(hex: "5E52B7").opacity(0.3), radius: 8, x: 0, y: 4)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 15)
+                                .background(Color(hex: "4d3865"))
+                                .cornerRadius(24)
+                                .shadow(color: Color(hex: "4d3865").opacity(0.35), radius: 8, x: 0, y: 4)
+                            }
+
+                            // Retake Button (Secondary, plain text below)
+                            Button {
+                                viewModel.reset()
+                            } label: {
+                                Text("Retake")
+                                    .font(.system(.subheadline, design: .rounded))
+                                    .bold()
+                                    .foregroundColor(Color(hex: "b7aac7"))
+                                    .padding(.vertical, 4)
                             }
                         }
-                        .padding(.bottom, 50)
-
-                        Spacer()
+                        .padding(.horizontal, 40)
+                        .padding(.bottom, 20)
                     }
                 }
                     
@@ -106,8 +111,8 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
                 .overlay {
-                    VStack {
-                        Spacer()
+                    VStack(spacing: 0) {
+                        Spacer(minLength: 16)
 
                         FaceScanningView(
                             image: image,
@@ -116,13 +121,15 @@ struct ContentView: View {
                             isAnalyzing: true
                         )
 
+                        Spacer(minLength: 20)
+
                         Button("Cancel") {
                             viewModel.reset()
                         }
                         .foregroundColor(Color(hex: "3A2E2B"))
                         .font(.system(.subheadline, design: .rounded))
                         .bold()
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, 28)
                         .padding(.vertical, 12)
                         .background(Color.white.opacity(0.6))
                         .cornerRadius(20)
@@ -131,9 +138,7 @@ struct ContentView: View {
                                 .stroke(Color.white.opacity(0.8), lineWidth: 1)
                         )
                         .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
-                        .padding(.bottom, 50)
-
-                        Spacer()
+                        .padding(.bottom, 24)
                     }
                 }
                     
