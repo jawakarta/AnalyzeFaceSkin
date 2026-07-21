@@ -18,40 +18,6 @@ struct FaceScanningView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            // Scanning Status Indicator
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(
-                        isAnalyzing ? Color.pink :
-                        (analysisResult != nil ? Color.green : Color.pink)
-                    )
-                    .frame(width: 8, height: 8)
-                    .opacity(isAnalyzing ? (meshOpacity > 0 ? meshOpacity : 0.3) : 1.0)
-                
-                Text(
-                    isAnalyzing ? "Scanning your skin..." :
-                    (analysisResult != nil ? "Skin Analysis Complete" : "Face Aligned & Ready")
-                )
-                .font(.system(.caption, design: .monospaced))
-                .foregroundColor(.white)
-                .bold()
-                .tracking(2)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.black.opacity(0.6))
-            .cornerRadius(20)
-            .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(
-                        isAnalyzing || analysisResult == nil ? Color.pink.opacity(0.5) : Color.green.opacity(0.5),
-                        lineWidth: 1
-                    )
-            )
-            .shadow(
-                color: isAnalyzing || analysisResult == nil ? Color.pink.opacity(0.3) : Color.green.opacity(0.3),
-                radius: 6
-            )
             
             // Oval Face Container with Glowing Light Overlays
             ZStack {

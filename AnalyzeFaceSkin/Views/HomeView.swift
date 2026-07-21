@@ -39,6 +39,20 @@ struct HomeView: View {
         }
     }
 
+    private var greetingText: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12:
+            return "Good morning,"
+        case 12..<17:
+            return "Good afternoon,"
+        case 17..<21:
+            return "Good evening,"
+        default:
+            return "Good night,"
+        }
+    }
+
     var body: some View {
         NavigationStack(path: $navPath) {
             ZStack {
@@ -57,20 +71,13 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     // ── Header Section ──────────────────────────────────────────
                     VStack(spacing: 8) {
-                        Text("Good morning,")
+                        Text(greetingText)
                             .font(.system(size: 18, weight: .medium, design: .default))
                             .foregroundColor(Color(hex: "757482"))
                         
                         Text("Let's take care of your skin.")
                             .font(.system(size: 24, weight: .bold, design: .default))
                             .foregroundColor(Color(hex: "1C1B24"))
-                        
-                        Text("Scan your skin to get personalized\ninsights and recommendations.")
-                            .font(.system(size: 14, weight: .regular, design: .default))
-                            .foregroundColor(Color(hex: "8E8D9E"))
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                            .padding(.top, 4)
                     }
                     .padding(.top, 40)
                     .padding(.horizontal, 24)

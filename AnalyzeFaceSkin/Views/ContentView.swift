@@ -69,8 +69,6 @@ struct ContentView: View {
                                 viewModel.startScanning()
                             } label: {
                                 HStack(spacing: 8) {
-                                    Image(systemName: "sparkles")
-                                        .font(.system(size: 16, weight: .semibold))
                                     Text("Analyze Now")
                                         .font(.system(.subheadline, design: .rounded))
                                         .bold()
