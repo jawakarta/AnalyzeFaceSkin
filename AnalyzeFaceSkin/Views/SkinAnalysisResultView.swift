@@ -29,6 +29,7 @@ struct SkinAnalysisResultView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @State private var navigateToAcneDetail = false
+    @State private var navigateToSkinTypeDetail = false
     @State private var hasSavedHistory = false
 
     var body: some View {
@@ -84,6 +85,9 @@ struct SkinAnalysisResultView: View {
         }
         .navigationDestination(isPresented: $navigateToAcneDetail) {
             AcneDetailView(spotCount: result.acneBoundingBoxes.count)
+        }
+        .navigationDestination(isPresented: $navigateToSkinTypeDetail) {
+            SkinTypeDetailView(skinType: result.skinType ?? "Normal")
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -237,23 +241,28 @@ struct SkinAnalysisResultView: View {
                 .foregroundColor(.black)
             
             let type = result.skinType ?? "Unknown"
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle().fill(Color.blue.opacity(0.08)).frame(width: 44, height: 44)
-                    Image(systemName: "drop.fill").foregroundColor(.blue).font(.title3)
+            Button(action: {
+                navigateToSkinTypeDetail = true
+            }) {
+                HStack(spacing: 16) {
+                    ZStack {
+                        Circle().fill(Color.blue.opacity(0.08)).frame(width: 44, height: 44)
+                        Image(systemName: "drop.fill").foregroundColor(.blue).font(.title3)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Skin Type").font(.caption).foregroundColor(.gray)
+                        Text(type.capitalized).font(.body).fontWeight(.bold).foregroundColor(.black)
+                        Text(descriptionForType(type)).font(.caption).foregroundColor(.gray)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold)).foregroundColor(.gray)
                 }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Skin Type").font(.caption).foregroundColor(.gray)
-                    Text(type.capitalized).font(.body).fontWeight(.bold).foregroundColor(.black)
-                    Text(descriptionForType(type)).font(.caption).foregroundColor(.gray)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 14, weight: .semibold)).foregroundColor(.gray)
+                .padding(16)
+                .background(Color.white)
+                .cornerRadius(16)
             }
-            .padding(16)
-            .background(Color.white)
-            .cornerRadius(16)
+            .buttonStyle(PlainButtonStyle())
             
             let count = result.acneBoundingBoxes.count
             let acneDescText: String = {
