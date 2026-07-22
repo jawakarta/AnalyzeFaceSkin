@@ -28,8 +28,8 @@ struct ContentView: View {
             case .captured(let image):
                 LinearGradient(
                     colors: [
-                        Color(hex: "FDF7FB"), // Soft pale rose
-                        Color(hex: "F7F6FD"), // Soft lavender
+                        Color(hex: "FFE8F8"), // Soft pale rose
+                        Color(hex: "F1F4FF"), // Soft lavender
                         Color(hex: "FFFFFF")  // Pure white
                     ],
                     startPoint: .top,
@@ -49,7 +49,7 @@ struct ContentView: View {
 
                         VStack(spacing: 8) {
                             Text("You’re ready to go!")
-                                .font(.system(.title2, design: .rounded))
+                                .font(.system(.title2))
                                 .bold()
                                 .foregroundColor(Color(hex: "3A2E2B"))
 
@@ -100,8 +100,8 @@ struct ContentView: View {
             case .scanning(let image):
                 LinearGradient(
                     colors: [
-                        Color(hex: "FDF7FB"), // Soft pale rose
-                        Color(hex: "F7F6FD"), // Soft lavender
+                        Color(hex: "FFE8F8"), // Soft pale rose
+                        Color(hex: "F1F4FF"), // Soft lavender
                         Color(hex: "FFFFFF")  // Pure white
                     ],
                     startPoint: .top,
@@ -128,8 +128,8 @@ struct ContentView: View {
             case .result(let image, let result):
                 LinearGradient(
                     colors: [
-                        Color(hex: "FDF7FB"), // Soft pale rose
-                        Color(hex: "F7F6FD"), // Soft lavender
+                        Color(hex: "FFE8F8"), // Soft pale rose
+                        Color(hex: "F1F4FF"), // Soft lavender
                         Color(hex: "FFFFFF")  // Pure white
                     ],
                     startPoint: .top,
