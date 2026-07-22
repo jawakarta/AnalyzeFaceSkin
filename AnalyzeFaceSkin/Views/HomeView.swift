@@ -75,7 +75,7 @@ struct HomeView: View {
                             .font(.system(size: 18, weight: .medium, design: .default))
                             .foregroundColor(Color(hex: "757482"))
                         
-                        Text("Let's take care of your skin. tes")
+                        Text("Let's take care of your skin.")
                             .font(.system(size: 24, weight: .bold, design: .default))
                             .foregroundColor(Color(hex: "1C1B24"))
                     }
