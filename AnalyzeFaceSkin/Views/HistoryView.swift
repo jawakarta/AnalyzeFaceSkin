@@ -45,7 +45,6 @@ struct HistoryView: View {
                                             acneConfidence:    nil,
                                             acneBoundingBoxes: history.acneBoundingBoxes
                                         ),
-                                        grayscalePreview: nil,
                                         clahePreview:     nil,
                                         isFromHistory:    true,
                                         onDone:           {}

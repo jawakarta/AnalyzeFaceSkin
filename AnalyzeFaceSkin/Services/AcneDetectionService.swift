@@ -24,8 +24,8 @@ class AcneDetectionService {
 
     private enum YOLO {
         /// Name of the CoreML model file (without extension).
-        /// Add AcneDetector.mlpackage to your Xcode target.
-        static let modelName       = "yolo26a_acne"
+        /// Add yolo11AcneClahe.mlpackage to your Xcode target.
+        static let modelName       = "yolo11AcneClahe"
 
         static let inputW          = 640
         static let inputH          = 640
@@ -42,20 +42,32 @@ class AcneDetectionService {
 
     /// Which model is currently loaded
     private enum LoadedModel {
-        case yolo(VNCoreMLModel)              // AcneDetector.mlpackage (YOLO11/YOLOv8)
+        case yolo(VNCoreMLModel)              // yolo11AcneClahe.mlpackage (YOLO11)
         case segmenter(VNCoreMLModel)         // SkinConditionSegmenter.mlpackage (fallback)
     }
 
     private let loadedModel: LoadedModel? = {
-        // ── 1. Try YOLO model first ─────────────────────────────────────────
+        let cfg = MLModelConfiguration()
+        cfg.computeUnits = .cpuOnly
+
+        // ── 1. Try yolo11AcneClahe generated model class (Xcode auto-gen) ────
+        if let modelObj = try? yolo11AcneClahe(configuration: cfg) {
+            do {
+                let vm = try VNCoreMLModel(for: modelObj.model)
+                print("[AcneDetector] ✅ Loaded yolo11AcneClahe model class")
+                return .yolo(vm)
+            } catch {
+                print("[AcneDetector] VNCoreMLModel creation failed: \(error)")
+            }
+        }
+
+        // ── 2. Try loading yolo11AcneClahe from main bundle ──────────────────
         if let url = Bundle.main.url(forResource: YOLO.modelName, withExtension: "mlpackage")
                   ?? Bundle.main.url(forResource: YOLO.modelName, withExtension: "mlmodel") {
             do {
-                let cfg = MLModelConfiguration()
-                cfg.computeUnits = .cpuOnly
                 let model = try MLModel(contentsOf: url, configuration: cfg)
                 let vm    = try VNCoreMLModel(for: model)
-                print("[AcneDetector] ✅ Loaded YOLO model: \(YOLO.modelName)")
+                print("[AcneDetector] ✅ Loaded YOLO model from bundle: \(YOLO.modelName)")
                 return .yolo(vm)
             } catch {
                 print("[AcneDetector] YOLO load failed: \(error)")
@@ -64,10 +76,8 @@ class AcneDetectionService {
             print("[AcneDetector] ℹ️  \(YOLO.modelName).mlpackage not found — using SkinConditionSegmenter fallback")
         }
 
-        // ── 2. Fallback: SkinConditionSegmenter (already in project) ────────
+        // ── 3. Fallback: SkinConditionSegmenter ─────────────────────────────
         do {
-            let cfg = MLModelConfiguration()
-            cfg.computeUnits = .cpuOnly
             let seg = try SkinConditionSegmenter(configuration: cfg)
             let vm  = try VNCoreMLModel(for: seg.model)
             print("[AcneDetector] ✅ Fallback: SkinConditionSegmenter loaded")
@@ -88,9 +98,8 @@ class AcneDetectionService {
     }
 
     struct DetectionResult {
-        let acne:             ConditionScore
-        let grayscalePreview: UIImage?
-        let clahePreview:     UIImage?
+        let acne:         ConditionScore
+        let clahePreview: UIImage?
     }
 
     // MARK: - Internal Types
@@ -111,9 +120,8 @@ class AcneDetectionService {
     }
 
     private struct PreprocessedImages {
-        let modelInput:  CGImage        // 640×640 BGRA (CLAHE-enhanced) — fed to Vision
-        let grayscale:   UIImage        // debug: luminance image
-        let clahe:       UIImage        // debug: per-channel CLAHE image
+        let modelInput:  CGImage        // 640×640 BGRA (L-channel CLAHE-enhanced) — fed to Vision
+        let clahe:       UIImage        // debug: L-channel CLAHE preview image
         let letterbox:   LetterboxInfo
     }
 
@@ -124,7 +132,7 @@ class AcneDetectionService {
 
         guard let loaded = loadedModel else {
             completion(.failure(makeError(
-                "No model available. Add AcneDetector.mlpackage or ensure SkinConditionSegmenter is in the project.",
+                "No model available. Add yolo11AcneClahe.mlpackage or ensure SkinConditionSegmenter is in the project.",
                 code: 404)))
             return
         }
@@ -157,7 +165,6 @@ class AcneDetectionService {
             let result = self.parseYOLOOutput(
                 observations: req.results ?? [],
                 lb:           prep.letterbox,
-                grayscale:    prep.grayscale,
                 clahe:        prep.clahe
             )
             completion(.success(result))
@@ -189,14 +196,12 @@ class AcneDetectionService {
                 let result = self.parseYOLOOutput(
                     observations: results,
                     lb:           prep.letterbox,
-                    grayscale:    prep.grayscale,
                     clahe:        prep.clahe
                 )
                 completion(.success(result))
             } else {
                 let result = self.parseSegmenterMask(
                     results:   results,
-                    grayscale: prep.grayscale,
                     clahe:     prep.clahe
                 )
                 completion(.success(result))
@@ -214,7 +219,6 @@ class AcneDetectionService {
 
     private func parseYOLOOutput(observations: [VNObservation],
                                   lb: LetterboxInfo,
-                                  grayscale: UIImage,
                                   clahe: UIImage) -> DetectionResult {
 
         // Collect MLMultiArray outputs; identify by shape
@@ -241,14 +245,14 @@ class AcneDetectionService {
 
         guard let pred = predArray else {
             print("[AcneDetector] ⚠️  No prediction tensor found in model output")
-            return defaultResult(grayscale: grayscale, clahe: clahe)
+            return defaultResult(clahe: clahe)
         }
 
         // ── Decode → filter by confidence → NMS ────────────────────────────
         let candidates = decodePredictions(pred)
         print("[AcneDetector] raw candidates: \(candidates.count)")
         guard !candidates.isEmpty else {
-            return defaultResult(grayscale: grayscale, clahe: clahe)
+            return defaultResult(clahe: clahe)
         }
 
         let detections = applyNMS(candidates)
@@ -280,9 +284,8 @@ class AcneDetectionService {
         }
 
         return DetectionResult(
-            acne:             makeScore(detections: detections, boxes: boxes),
-            grayscalePreview: grayscale,
-            clahePreview:     clahe
+            acne:         makeScore(detections: detections, boxes: boxes),
+            clahePreview: clahe
         )
     }
 
@@ -421,7 +424,7 @@ class AcneDetectionService {
         return union > 0 ? inter / union : 0
     }
 
-    // MARK: - Preprocessing: Letterbox (640×640) + Grayscale + Per-channel CLAHE
+    // MARK: - Preprocessing: Letterbox (640×640) + CLAHE on L Channel Only (LAB Color Space)
 
     private func buildPreprocessedImages(from image: UIImage) -> PreprocessedImages? {
         guard let sourceCG = image.cgImage else { return nil }
@@ -491,38 +494,21 @@ class AcneDetectionService {
             rCh[i] = canvas[i * bpp + 2]
         }
 
-        // ── 5. Build Grayscale preview (BT.601 luminance) ───────────────────
-        var grayBuf = [UInt8](repeating: 255, count: totalPx * bpp)
-        for i in 0..<totalPx {
-            let r      = Double(rCh[i])
-            let g      = Double(gCh[i])
-            let b      = Double(bCh[i])
-            let lumaD  = 0.299 * r + 0.587 * g + 0.114 * b
-            let luma   = UInt8(clamping: Int(lumaD.rounded()))
-            grayBuf[i * bpp + 0] = luma
-            grayBuf[i * bpp + 1] = luma
-            grayBuf[i * bpp + 2] = luma
-            grayBuf[i * bpp + 3] = 255
-        }
-        guard let grayCtx = CGContext(data: &grayBuf,
-                                       width: inputW, height: inputH,
-                                       bitsPerComponent: 8,
-                                       bytesPerRow: inputW * bpp,
-                                       space: rgbCS, bitmapInfo: bitmapInfo),
-              let grayCG  = grayCtx.makeImage() else { return nil }
-        let grayscalePreview = UIImage(cgImage: grayCG, scale: 1, orientation: .up)
+        // ── 5. Convert RGB -> LAB color space (OpenCV COLOR_RGB2LAB equivalent) ──
+        let lab = rgbToLAB(rCh: rCh, gCh: gCh, bCh: bCh, count: totalPx)
 
-        // ── 6. Per-channel CLAHE (preserves redness signal for acne) ────────
-        let rOut = applyCLAHE(pixels: rCh, width: inputW, height: inputH)
-        let gOut = applyCLAHE(pixels: gCh, width: inputW, height: inputH)
-        let bOut = applyCLAHE(pixels: bCh, width: inputW, height: inputH)
+        // ── 6. Apply CLAHE ONLY to L channel (clipLimit=3.0, tileGridSize=8x8) ───
+        let lClahe = applyCLAHE(pixels: lab.l, width: inputW, height: inputH, tileRows: 8, tileCols: 8, clipLimit: 3.0)
 
-        // ── 7. CLAHE preview + model input buffer ────────────────────────────
+        // ── 7. Merge (L_clahe, A, B) & convert LAB back to RGB (COLOR_LAB2RGB) ───
+        let rgbOut = labToRGB(lCh: lClahe, aCh: lab.a, bCh: lab.b, count: totalPx)
+
+        // ── 8. Build CLAHE preview + model input buffer ──────────────────────
         var claheBuf = [UInt8](repeating: 255, count: totalPx * bpp)
         for i in 0..<totalPx {
-            claheBuf[i * bpp + 0] = bOut[i]
-            claheBuf[i * bpp + 1] = gOut[i]
-            claheBuf[i * bpp + 2] = rOut[i]
+            claheBuf[i * bpp + 0] = rgbOut.b[i]
+            claheBuf[i * bpp + 1] = rgbOut.g[i]
+            claheBuf[i * bpp + 2] = rgbOut.r[i]
             claheBuf[i * bpp + 3] = 255
         }
         guard let claheCtx = CGContext(data: &claheBuf,
@@ -533,17 +519,115 @@ class AcneDetectionService {
               let claheCG  = claheCtx.makeImage() else { return nil }
         let clahePreview = UIImage(cgImage: claheCG, scale: 1, orientation: .up)
 
+        print("[AcneDetector] 🧪 Preprocessed L-channel CLAHE image generated successfully (\(inputW)x\(inputH)). Debug preview available in clahePreview.")
+
         return PreprocessedImages(modelInput:  claheCG,
-                                  grayscale:   grayscalePreview,
                                   clahe:       clahePreview,
                                   letterbox:   lb)
     }
 
-    // MARK: - CLAHE (8×8 tile, clip=2.0, bilinear interpolation)
+    // MARK: - Color Space Conversion: RGB <-> LAB (OpenCV cv2.cvtColor compatible)
+
+    private struct LABChannels {
+        var l: [UInt8]  // [0...255], L_uint8 = L* * 2.55
+        var a: [UInt8]  // [0...255], a_uint8 = a* + 128
+        var b: [UInt8]  // [0...255], b_uint8 = b* + 128
+    }
+
+    /// Converts RGB pixel arrays (640x640) to OpenCV-compatible uint8 LAB channels.
+    private func rgbToLAB(rCh: [UInt8], gCh: [UInt8], bCh: [UInt8], count: Int) -> LABChannels {
+        var lCh = [UInt8](repeating: 0, count: count)
+        var aCh = [UInt8](repeating: 0, count: count)
+        var bChOut = [UInt8](repeating: 0, count: count)
+
+        let xn = 0.950456
+        let yn = 1.000000
+        let zn = 1.088754
+        let delta = 6.0 / 29.0
+        let delta3 = delta * delta * delta
+
+        for i in 0..<count {
+            let r = Double(rCh[i]) / 255.0
+            let g = Double(gCh[i]) / 255.0
+            let b = Double(bCh[i]) / 255.0
+
+            let rLin = (r > 0.04045) ? pow((r + 0.055) / 1.055, 2.4) : (r / 12.92)
+            let gLin = (g > 0.04045) ? pow((g + 0.055) / 1.055, 2.4) : (g / 12.92)
+            let bLin = (b > 0.04045) ? pow((b + 0.055) / 1.055, 2.4) : (b / 12.92)
+
+            let x = 0.412453 * rLin + 0.357580 * gLin + 0.180423 * bLin
+            let y = 0.212671 * rLin + 0.715160 * gLin + 0.072169 * bLin
+            let z = 0.019334 * rLin + 0.119193 * gLin + 0.950304 * bLin
+
+            let xr = x / xn
+            let yr = y / yn
+            let zr = z / zn
+
+            let fx = (xr > delta3) ? pow(xr, 1.0 / 3.0) : (7.787037 * xr + 16.0 / 116.0)
+            let fy = (yr > delta3) ? pow(yr, 1.0 / 3.0) : (7.787037 * yr + 16.0 / 116.0)
+            let fz = (zr > delta3) ? pow(zr, 1.0 / 3.0) : (7.787037 * zr + 16.0 / 116.0)
+
+            let Lstar = 116.0 * fy - 16.0
+            let astar = 500.0 * (fx - fy)
+            let bstar = 200.0 * (fy - fz)
+
+            lCh[i]    = UInt8(clamping: Int((Lstar * 2.55).rounded()))
+            aCh[i]    = UInt8(clamping: Int((astar + 128.0).rounded()))
+            bChOut[i] = UInt8(clamping: Int((bstar + 128.0).rounded()))
+        }
+
+        return LABChannels(l: lCh, a: aCh, b: bChOut)
+    }
+
+    /// Converts OpenCV-compatible uint8 LAB channels back to RGB pixel arrays.
+    private func labToRGB(lCh: [UInt8], aCh: [UInt8], bCh: [UInt8], count: Int) -> (r: [UInt8], g: [UInt8], b: [UInt8]) {
+        var rCh = [UInt8](repeating: 0, count: count)
+        var gCh = [UInt8](repeating: 0, count: count)
+        var bChOut = [UInt8](repeating: 0, count: count)
+
+        let xn = 0.950456
+        let yn = 1.000000
+        let zn = 1.088754
+        let delta = 6.0 / 29.0
+
+        for i in 0..<count {
+            let Lstar = Double(lCh[i]) / 2.55
+            let astar = Double(aCh[i]) - 128.0
+            let bstar = Double(bCh[i]) - 128.0
+
+            let fy = (Lstar + 16.0) / 116.0
+            let fx = fy + (astar / 500.0)
+            let fz = fy - (bstar / 200.0)
+
+            let xr = (fx > delta) ? (fx * fx * fx) : ((fx - 16.0 / 116.0) / 7.787037)
+            let yr = (fy > delta) ? (fy * fy * fy) : ((fy - 16.0 / 116.0) / 7.787037)
+            let zr = (fz > delta) ? (fz * fz * fz) : ((fz - 16.0 / 116.0) / 7.787037)
+
+            let x = xr * xn
+            let y = yr * yn
+            let z = zr * zn
+
+            let rLin =  3.2404542 * x - 1.5371385 * y - 0.4985314 * z
+            let gLin = -0.9692660 * x + 1.8760108 * y + 0.0415560 * z
+            let bLin =  0.0556434 * x - 0.2040259 * y + 1.0572252 * z
+
+            let r = (rLin > 0.0031308) ? (1.055 * pow(rLin, 1.0 / 2.4) - 0.055) : (12.92 * rLin)
+            let g = (gLin > 0.0031308) ? (1.055 * pow(gLin, 1.0 / 2.4) - 0.055) : (12.92 * gLin)
+            let b = (bLin > 0.0031308) ? (1.055 * pow(bLin, 1.0 / 2.4) - 0.055) : (12.92 * bLin)
+
+            rCh[i]    = UInt8(clamping: Int((r * 255.0).rounded()))
+            gCh[i]    = UInt8(clamping: Int((g * 255.0).rounded()))
+            bChOut[i] = UInt8(clamping: Int((b * 255.0).rounded()))
+        }
+
+        return (r: rCh, g: gCh, b: bChOut)
+    }
+
+    // MARK: - CLAHE (8×8 tile, clip=3.0, bilinear interpolation)
 
     private func applyCLAHE(pixels: [UInt8], width: Int, height: Int,
                              tileRows: Int = 8, tileCols: Int = 8,
-                             clipLimit: Double = 2.0) -> [UInt8] {
+                             clipLimit: Double = 3.0) -> [UInt8] {
 
         let tileW = max(1, width  / tileCols)
         let tileH = max(1, height / tileRows)
@@ -610,19 +694,13 @@ class AcneDetectionService {
     }
 
     // MARK: - SkinConditionSegmenter Mask Parser (fallback)
-    //
-    // SkinConditionSegmenter outputs a pixel-buffer segmentation mask where:
-    //   Red channel   → Acne regions
-    //   Green channel → Pore regions
-    // We parse the Red channel to derive acne bounding boxes.
 
     private func parseSegmenterMask(results: [VNObservation]?,
-                                     grayscale: UIImage,
                                      clahe: UIImage) -> DetectionResult {
 
         guard let obs = results?.first as? VNPixelBufferObservation else {
             print("[AcneDetector/Segmenter] no VNPixelBufferObservation — got \(String(describing: results?.first))")
-            return defaultResult(grayscale: grayscale, clahe: clahe)
+            return defaultResult(clahe: clahe)
         }
 
         let pb = obs.pixelBuffer
@@ -639,7 +717,7 @@ class AcneDetectionService {
 
         guard totalPx > 0,
               let base = CVPixelBufferGetBaseAddress(pb) else {
-            return defaultResult(grayscale: grayscale, clahe: clahe)
+            return defaultResult(clahe: clahe)
         }
 
         // ── Float32 single-channel (many CoreML segmentation models) ────────
@@ -647,7 +725,7 @@ class AcneDetectionService {
         if format == kOneComponent32Float {
             return parseSegmenterFloat(base: base, bpr: bpr,
                                         width: width, height: height, totalPx: totalPx,
-                                        grayscale: grayscale, clahe: clahe)
+                                        clahe: clahe)
         }
 
         // ── UInt8 4-channel (BGRA / RGBA / ARGB) ────────────────────────────
@@ -689,16 +767,15 @@ class AcneDetectionService {
 
         let boxes = segmenterBoundingBoxes(grid: grid, gridN: gridN)
         return DetectionResult(
-            acne:             segmenterScore(density: density, boxes: boxes),
-            grayscalePreview: grayscale,
-            clahePreview:     clahe
+            acne:         segmenterScore(density: density, boxes: boxes),
+            clahePreview: clahe
         )
     }
 
     private func parseSegmenterFloat(base: UnsafeMutableRawPointer,
                                       bpr: Int,
                                       width: Int, height: Int, totalPx: Int,
-                                      grayscale: UIImage, clahe: UIImage) -> DetectionResult {
+                                      clahe: UIImage) -> DetectionResult {
         let fbuf      = base.assumingMemoryBound(to: Float32.self)
         let floatBPR  = bpr / MemoryLayout<Float32>.size
         let threshold: Float = 0.15
@@ -726,9 +803,8 @@ class AcneDetectionService {
 
         let boxes = segmenterBoundingBoxes(grid: grid, gridN: gridN)
         return DetectionResult(
-            acne:             segmenterScore(density: density, boxes: boxes),
-            grayscalePreview: grayscale,
-            clahePreview:     clahe
+            acne:         segmenterScore(density: density, boxes: boxes),
+            clahePreview: clahe
         )
     }
 
@@ -811,12 +887,10 @@ class AcneDetectionService {
     @inline(__always)
     private func sigmoid(_ x: Float) -> Float { 1.0 / (1.0 + expf(-x)) }
 
-    private func defaultResult(grayscale: UIImage? = nil,
-                               clahe: UIImage? = nil) -> DetectionResult {
+    private func defaultResult(clahe: UIImage? = nil) -> DetectionResult {
         DetectionResult(
             acne: ConditionScore(level: "low", confidence: 0, density: 0, boundingBoxes: []),
-            grayscalePreview: grayscale,
-            clahePreview:     clahe
+            clahePreview: clahe
         )
     }
 
