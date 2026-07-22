@@ -25,7 +25,7 @@ class AcneDetectionService {
     private enum YOLO {
         /// Name of the CoreML model file (without extension).
         /// Add AcneDetector.mlpackage to your Xcode target.
-        static let modelName       = "AcneDetector"
+        static let modelName       = "yolo26a_acne"
 
         static let inputW          = 640
         static let inputH          = 640
