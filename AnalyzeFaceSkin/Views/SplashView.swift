@@ -27,7 +27,7 @@ struct SplashView: View {
 
             VStack(spacing: 36) {
                 // Face scanner logo asset loaded directly with original colors
-                Image("black_logo")
+                Image("Black Logo Final")
                     .renderingMode(.original)
                     .resizable()
                     .scaledToFit()
@@ -35,8 +35,8 @@ struct SplashView: View {
 
                 // Subtitle text from the design
                 Text("Know Your Skin Better!")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(Color(hex: "2E2522"))
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Color(hex: "1C1C1C"))
             }
             .opacity(opacity)
         }

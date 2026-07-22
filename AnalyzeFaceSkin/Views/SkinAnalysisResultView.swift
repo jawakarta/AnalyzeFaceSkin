@@ -50,8 +50,8 @@ struct SkinAnalysisResultView: View {
                     annotatedImageSection
                         .padding(.horizontal, 20)
 
-                    skinSummaryCard
-                        .padding(.horizontal, 20)
+//                    skinSummaryCard
+//                        .padding(.horizontal, 20)
 
                     findingsSection
                         .padding(.horizontal, 20)
@@ -150,68 +150,68 @@ struct SkinAnalysisResultView: View {
     }
 
 
-    private var skinSummaryCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 6) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 14))
-                    .foregroundColor(.orange)
-                
-                Text("Your Skin Summary")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .foregroundColor(.black)
-            }
-            
-            let type = result.skinType ?? "Unknown"
-            let count = result.acneBoundingBoxes.count
-            let acneText: String = {
-                if count == 0 {
-                    return "without significant acne spots"
-                } else if count == 1 {
-                    return "with 1 visible acne spot"
-                } else {
-                    return "with \(count) visible acne spots"
-                }
-            }()
-            
-            Text("Your scan shows an \(type.lowercased()) skin type \(acneText). With the right care, your skin can look clearer and healthier.")
-                .font(.subheadline)
-                .foregroundColor(.black.opacity(0.7))
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
-            
-            HStack(spacing: 16) {
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle().fill(Color.blue.opacity(0.1)).frame(width: 36, height: 36)
-                        Image(systemName: "drop.fill").foregroundColor(.blue).font(.system(size: 14))
-                    }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Skin Type").font(.system(size: 10)).foregroundColor(.gray)
-                        Text(type.capitalized).font(.system(size: 14, weight: .bold)).foregroundColor(.black)
-                    }
-                }
-                
-                HStack(spacing: 10) {
-                    ZStack {
-                        Circle().fill(Color.red.opacity(0.1)).frame(width: 36, height: 36)
-                        Circle().fill(Color.red).frame(width: 12, height: 12)
-                    }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Acne").font(.system(size: 10)).foregroundColor(.gray)
-                        Text(spotCountText).font(.system(size: 14, weight: .bold)).foregroundColor(.black)
-                    }
-                }
-            }
-            .padding(.top, 4)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
-        .cornerRadius(24)
-        .shadow(color: Color.black.opacity(0.02), radius: 8, y: 4)
-    }
+//    private var skinSummaryCard: some View {
+//        VStack(alignment: .leading, spacing: 14) {
+//            HStack(spacing: 6) {
+//                Image(systemName: "sparkles")
+//                    .font(.system(size: 14))
+//                    .foregroundColor(.orange)
+//                
+//                Text("Your Skin Summary")
+//                    .font(.headline)
+//                    .fontWeight(.bold)
+//                    .foregroundColor(.black)
+//            }
+//            
+//            let type = result.skinType ?? "Unknown"
+//            let count = result.acneBoundingBoxes.count
+//            let acneText: String = {
+//                if count == 0 {
+//                    return "without significant acne spots"
+//                } else if count == 1 {
+//                    return "with 1 visible acne spot"
+//                } else {
+//                    return "with \(count) visible acne spots"
+//                }
+//            }()
+//            
+//            Text("Your scan shows an \(type.lowercased()) skin type \(acneText). With the right care, your skin can look clearer and healthier.")
+//                .font(.subheadline)
+//                .foregroundColor(.black.opacity(0.7))
+//                .lineSpacing(4)
+//                .fixedSize(horizontal: false, vertical: true)
+//            
+//            HStack(spacing: 16) {
+//                HStack(spacing: 10) {
+//                    ZStack {
+//                        Circle().fill(Color.blue.opacity(0.1)).frame(width: 36, height: 36)
+//                        Image(systemName: "drop.fill").foregroundColor(.blue).font(.system(size: 14))
+//                    }
+//                    VStack(alignment: .leading, spacing: 2) {
+//                        Text("Skin Type").font(.system(size: 10)).foregroundColor(.gray)
+//                        Text(type.capitalized).font(.system(size: 14, weight: .bold)).foregroundColor(.black)
+//                    }
+//                }
+//        
+//                HStack(spacing: 10) {
+//                    ZStack {
+//                        Circle().fill(Color.red.opacity(0.1)).frame(width: 36, height: 36)
+//                        Circle().fill(Color.red).frame(width: 12, height: 12)
+//                    }
+//                    VStack(alignment: .leading, spacing: 2) {
+//                        Text("Acne").font(.system(size: 10)).foregroundColor(.gray)
+//                        Text(spotCountText).font(.system(size: 14, weight: .bold)).foregroundColor(.black)
+//                    }
+//                }
+//            }
+//            .padding(.top, 4)
+//        }
+//        .padding(20)
+//        .frame(maxWidth: .infinity, alignment: .leading)
+//        .background(Color.white)
+//        .cornerRadius(24)
+//        .shadow(color: Color.black.opacity(0.02), radius: 8, y: 4)
+//    }
 
 
     private var findingsSection: some View {
@@ -313,7 +313,7 @@ struct SkinAnalysisResultView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color(red: 0.11, green: 0.11, blue: 0.14))
+                .background(Color(hex: "4d3865"))
                 .cornerRadius(28)
         }
     }
@@ -383,24 +383,6 @@ private struct BoundingBoxView: View {
                 .stroke(color, lineWidth: 1.5)
                 .frame(width: pixelRect.width, height: pixelRect.height)
                 .position(x: pixelRect.midX, y: pixelRect.midY)
-
-            let labelText: String = {
-                if let conf = confidence {
-                    return String(format: "%@ %.0f%%", label, conf * 100)
-                } else {
-                    return label
-                }
-            }()
-            
-            Text(labelText)
-                .font(.system(size: 9, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(color)
-                .cornerRadius(4)
-                .shadow(color: Color.black.opacity(0.12), radius: 2, x: 0, y: 1)
-                .position(x: pixelRect.midX, y: max(10, pixelRect.minY - 10))
         }
     }
 }

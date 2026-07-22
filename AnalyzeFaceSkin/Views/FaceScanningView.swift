@@ -19,58 +19,19 @@ struct FaceScanningView: View {
     var body: some View {
         VStack(spacing: 20) {
             
-            // Oval Face Container with Glowing Light Overlays
+            // Oval Face Container
             ZStack {
-                // 1. Soft Ambient Light Aura behind Oval
+                // Background Shadow Shape
                 Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.pink.opacity(0.35),
-                                Color(hex: "E5B4D6").opacity(0.2),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 30,
-                            endRadius: 130
-                        )
-                    )
-                    .blur(radius: 14)
-                    .scaleEffect(1.15)
+                    .fill(Color.white)
+                    .shadow(color: Color(hex: "5E52B7").opacity(0.20), radius: 20, x: 0, y: 10)
 
-
-                // 3. Pulsing Outer Glow Ring
+                // Main Oval Ring Frame
                 Ellipse()
                     .stroke(
-                        LinearGradient(
-                            colors: [Color.pink.opacity(0.8), Color(hex: "E5B4D6").opacity(0.5)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 2
-                    )
-                    .scaleEffect(1.03)
-                    .blur(radius: 3)
-                    .opacity(isAnalyzing ? (meshOpacity > 0 ? meshOpacity : 0.4) : 0.8)
-
-                // 4. Main Glowing Oval Ring Frame with Neon Highlights
-                Ellipse()
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.pink,
-                                Color(hex: "E5B4D6"),
-                                Color(hex: "4d3865").opacity(0.8),
-                                Color.pink
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        Color.white,
                         lineWidth: 3
                     )
-                    .shadow(color: Color.pink.opacity(0.6), radius: 8)
-                    .shadow(color: Color(hex: "E5B4D6").opacity(0.7), radius: 4)
-                    .shadow(color: Color.pink.opacity(0.3), radius: 16)
 
                 // 5. Clipped Face Image & Overlays
                 ZStack {
@@ -87,18 +48,11 @@ struct FaceScanningView: View {
                         if !landmarks.isEmpty {
                             ActualFaceMeshShape(landmarks: landmarks)
                                 .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.pink.opacity(0.9),
-                                            Color(hex: "E5B4D6").opacity(0.7)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ),
+                                    Color.white,
                                     lineWidth: 1.5
                                 )
                                 .opacity(meshOpacity)
-                                .glow(color: Color.pink.opacity(0.4), radius: 4)
+                                .glow(color: Color.white.opacity(0.4), radius: 4)
 
                             // Glowing Face Mesh Nodes (Intersection Points)
                             FaceMeshNodesView(landmarks: landmarks, size: size)
@@ -160,7 +114,7 @@ struct FaceScanningView: View {
                                 .tracking(2)
                             
                             Text(type.capitalized)
-                                .font(.system(.title2, design: .rounded))
+                                .font(.system(.title2))
                                 .foregroundColor(.white)
                                 .bold()
                         }
@@ -366,10 +320,10 @@ struct FaceMeshNodesView: View {
                 ForEach(0..<points.count, id: \.self) { idx in
                     let pos = points[idx]
                     Circle()
-                        .fill(Color.pink)
+                        .fill(Color.white)
                         .frame(width: 4, height: 4)
                         .position(x: pos.x * size.width, y: pos.y * size.height)
-                        .shadow(color: Color.pink, radius: 4)
+                        .shadow(color: Color.white.opacity(0.8), radius: 4)
                 }
             }
         }

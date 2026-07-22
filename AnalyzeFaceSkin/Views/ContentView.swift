@@ -53,13 +53,13 @@ struct ContentView: View {
                                 .bold()
                                 .foregroundColor(Color(hex: "3A2E2B"))
 
-                            Text("We’ve captured your skin.\nLet’s analyze your results.")
-                                .font(.system(.subheadline, design: .rounded))
+                            Text("Let’s analyze your skin")
+                                .font(.system(.subheadline))
                                 .multilineTextAlignment(.center)
                                 .foregroundColor(Color(hex: "75635F"))
                                 .lineSpacing(3)
                         }
-                        .padding(.top, 28)
+                        .padding(.top, 40)
 
                         Spacer(minLength: 20)
 
@@ -70,7 +70,7 @@ struct ContentView: View {
                             } label: {
                                 HStack(spacing: 8) {
                                     Text("Analyze Now")
-                                        .font(.system(.subheadline, design: .rounded))
+                                        .font(.system(.subheadline))
                                         .bold()
                                 }
                                 .foregroundColor(.white)
@@ -86,7 +86,7 @@ struct ContentView: View {
                                 viewModel.reset()
                             } label: {
                                 Text("Retake")
-                                    .font(.system(.subheadline, design: .rounded))
+                                    .font(.system(.subheadline))
                                     .bold()
                                     .foregroundColor(Color(hex: "b7aac7"))
                                     .padding(.vertical, 4)
@@ -109,7 +109,7 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
                 .overlay {
-                    VStack(spacing: 24) {
+                    VStack(spacing: 34) {
                         Spacer(minLength: 24)
 
                         scanningStatusBadge
@@ -185,13 +185,8 @@ struct ContentView: View {
     @ViewBuilder
     private var scanningStatusBadge: some View {
         HStack(spacing: 10) {
-            Circle()
-                .fill(Color(hex: "EE4B6A"))
-                .frame(width: 10, height: 10)
-                .shadow(color: Color(hex: "EE4B6A").opacity(0.8), radius: 4)
-
             Text("Scanning your skin...")
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white)
         }
         .padding(.horizontal, 20)
@@ -200,7 +195,7 @@ struct ContentView: View {
         .clipShape(Capsule())
         .overlay(
             Capsule()
-                .stroke(Color(hex: "EE4B6A").opacity(0.8), lineWidth: 1.5)
+                .stroke(Color(hex: "FEFEFE").opacity(0.8), lineWidth: 1.5)
         )
         .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
     }

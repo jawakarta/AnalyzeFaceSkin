@@ -48,7 +48,7 @@ struct AgreementView: View {
                         .tracking(3)
 
                     Text("Skin Scan Consent")
-                        .font(.system(.title2, design: .rounded))
+                        .font(.system(.title2))
                         .bold()
                         .foregroundColor(Color(hex: "3A2E2B"))
                 }
@@ -108,7 +108,7 @@ struct AgreementView: View {
                         }
 
                         Text("I agree to allow the app to capture my face image for local machine learning analysis.")
-                            .font(.system(.footnote, design: .rounded))
+                            .font(.system(.footnote))
                             .foregroundColor(Color(hex: "3A2E2B"))
                             .multilineTextAlignment(.leading)
                             .lineLimit(nil)
@@ -125,7 +125,7 @@ struct AgreementView: View {
                     }
                 } label: {
                     Text("Confirm & Continue")
-                        .font(.system(.headline, design: .rounded))
+                        .font(.system(.headline))
                         .bold()
                         .foregroundColor(isChecked ? .white : Color(hex: "75635F").opacity(0.6))
                         .frame(maxWidth: .infinity)
@@ -165,12 +165,12 @@ struct AgreementView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(.subheadline, design: .rounded))
+                    .font(.system(.subheadline))
                     .bold()
                     .foregroundColor(Color(hex: "3A2E2B"))
 
                 Text(description)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.system(.caption))
                     .foregroundColor(Color(hex: "75635F"))
                     .lineLimit(nil)
             }

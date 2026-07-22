@@ -101,11 +101,11 @@ struct HistoryView: View {
                 .font(.system(size: 48))
                 .foregroundColor(Color(hex: "75635F").opacity(0.5))
             Text("No History Yet")
-                .font(.system(.title3, design: .rounded))
+                .font(.system(.title3))
                 .foregroundColor(Color(hex: "3A2E2B"))
                 .bold()
             Text("Your scan results will appear here")
-                .font(.system(.footnote, design: .rounded))
+                .font(.system(.footnote))
                 .foregroundColor(Color(hex: "75635F"))
             Spacer()
         }
@@ -135,16 +135,16 @@ private struct HistoryCard: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(history.skinType.capitalized)
-                    .font(.system(.headline, design: .rounded))
+                    .font(.system(.headline))
                     .foregroundColor(Color(hex: "3A2E2B"))
 
                 Text(String(format: "%.0f%% Match", history.skinTypeConfidence * 100))
-                    .font(.system(.caption, design: .monospaced))
+                    .font(.system(.caption))
                     .foregroundColor(Color(hex: "5E52B7"))
                     .bold()
 
                 Text(history.createdAt.formatted(date: .abbreviated, time: .shortened))
-                    .font(.system(.caption2, design: .rounded))
+                    .font(.system(.caption2))
                     .foregroundColor(Color(hex: "75635F"))
             }
 
