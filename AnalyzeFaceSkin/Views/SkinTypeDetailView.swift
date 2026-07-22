@@ -144,12 +144,27 @@ struct SkinTypeDetailView: View {
 struct SkinTypeHeaderSection: View {
     let title: String
     
+    private var iconName: String {
+        let normalized = title.lowercased()
+        if normalized.contains("oily") {
+            return "drop"
+        } else if normalized.contains("dry") {
+            return "water.waves"
+        } else {
+            return "face.smiling"
+        }
+    }
+    
     var body: some View {
         HStack(alignment: .center) {
             ZStack {
                 Circle()
                     .stroke(Color.black.opacity(0.8), lineWidth: 1.5)
                     .frame(width: 36, height: 36)
+                
+                Image(systemName: iconName)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.black)
             }
             
             VStack(alignment: .leading, spacing: 2) {
@@ -157,23 +172,8 @@ struct SkinTypeHeaderSection: View {
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
-                
-                Text("Educational Skin Guide")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
             }
             .padding(.leading, 8)
-            
-            Spacer()
-            
-            Circle()
-                .fill(Color(hex: "2596be").opacity(0.15))
-                .frame(width: 36, height: 36)
-                .overlay(
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color(hex: "2596be"))
-                )
         }
         .padding(.vertical, 8)
     }
@@ -218,14 +218,16 @@ struct CharacteristicsSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label {
+            HStack(spacing: 8) {
+                Image(systemName: "list.bullet.indent")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color(hex: "4d3865"))
+                    .frame(width: 20, alignment: .center)
+                
                 Text("Common Characteristics")
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
-            } icon: {
-                Image(systemName: "list.bullet.indent")
-                    .foregroundColor(Color(hex: "4d3865"))
             }
             
             VStack(alignment: .leading, spacing: 12) {
@@ -248,6 +250,7 @@ struct CharacteristicsSection: View {
                 }
             }
             .padding(.top, 4)
+            .padding(.leading, 28)
         }
     }
 }
@@ -257,14 +260,16 @@ struct DailyCareSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.green)
+                    .frame(width: 20, alignment: .center)
+                
                 Text("Daily Care Tips")
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
-            } icon: {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
             }
             
             VStack(alignment: .leading, spacing: 14) {
@@ -284,6 +289,7 @@ struct DailyCareSection: View {
                 }
             }
             .padding(.top, 4)
+            .padding(.leading, 28)
         }
     }
 }
@@ -293,14 +299,16 @@ struct HabitsToAvoidSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label {
+            HStack(spacing: 8) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color(red: 0.85, green: 0.35, blue: 0.35))
+                    .frame(width: 20, alignment: .center)
+                
                 Text("Habits to Avoid")
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
-            } icon: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(Color(red: 0.85, green: 0.35, blue: 0.35))
             }
             
             VStack(alignment: .leading, spacing: 14) {
@@ -320,6 +328,7 @@ struct HabitsToAvoidSection: View {
                 }
             }
             .padding(.top, 4)
+            .padding(.leading, 28)
         }
     }
 }
@@ -328,23 +337,24 @@ struct SkinTypeTakeawayBox: View {
     let takeaway: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "star.fill")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.orange)
-                
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: "star.fill")
+                .font(.system(size: 24))
+                .foregroundColor(.orange)
+                .padding(.top, 2)
+            
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Today's Takeaway")
-                    .font(.subheadline)
+                    .font(.body)
                     .fontWeight(.bold)
                     .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.1))
+                
+                Text(takeaway)
+                    .font(.subheadline)
+                    .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.1).opacity(0.9))
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            
-            Text(takeaway)
-                .font(.subheadline)
-                .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.1).opacity(0.9))
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
