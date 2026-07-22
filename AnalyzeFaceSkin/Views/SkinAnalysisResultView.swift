@@ -36,43 +36,62 @@ struct SkinAnalysisResultView: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color(hex: "FDF7FB"), // Soft pale rose
-                    Color(hex: "F7F6FD"), // Soft lavender
-                    Color(hex: "FFFFFF")  // Pure white
+                    Color(hex: "FFE8F8"), // Soft pale rose
+                    Color(hex: "F1F4FF"), // Soft lavender
+                    Color(hex: "FEFEFE")  // Pure white
                 ],
                 startPoint: .top,
                 endPoint: .bottom
             )
             .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                topBarView
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
-                        
-                        annotatedImageSection
-                            .padding(.horizontal, 20)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    
+                    annotatedImageSection
+                        .padding(.horizontal, 20)
 
-                        skinSummaryCard
-                            .padding(.horizontal, 20)
+                    skinSummaryCard
+                        .padding(.horizontal, 20)
 
-                        findingsSection
+                    findingsSection
+                        .padding(.horizontal, 20)
+                    
+                    if !isFromHistory {
+                        backToHomeButton
                             .padding(.horizontal, 20)
-                        
-                        if !isFromHistory {
-                            backToHomeButton
-                                .padding(.horizontal, 20)
-                                .padding(.top, 8)
-                                .padding(.bottom, 20)
-                        }
+                            .padding(.top, 8)
+                            .padding(.bottom, 20)
                     }
-                    .padding(.top, 12)
+                }
+                .padding(.top, 12)
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Your Skintuation")
+                    .font(.headline)
+                    .foregroundStyle(.black)
+            }
+
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    if isFromHistory {
+                        dismiss()
+                    } else {
+                        saveToHistory()
+                        onDone()
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                    }
+                    .foregroundColor(Color(hex: "5A4C47"))
                 }
             }
         }
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(isPresented: $navigateToAcneDetail) {
             AcneDetailView(spotCount: result.acneBoundingBoxes.count)
         }
@@ -82,41 +101,6 @@ struct SkinAnalysisResultView: View {
         .onAppear {
             saveToHistory()
         }
-    }
-
-
-    private var topBarView: some View {
-        HStack {
-            Button(action: {
-                if isFromHistory {
-                    dismiss()
-                } else {
-                    saveToHistory()
-                    onDone()
-                }
-            }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.black)
-                    .frame(width: 38, height: 38)
-                    .background(Color.white)
-                    .clipShape(Circle())
-                    .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
-            }
-            
-            Spacer()
-
-            Text("Your Skintuation")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(Color(hex: "1C1B24"))
-
-            Spacer()
-
-            Color.clear
-                .frame(width: 38, height: 38)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
     }
 
 

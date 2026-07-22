@@ -17,8 +17,8 @@ struct AgreementView: View {
             // Premium background gradient matching home
             LinearGradient(
                 colors: [
-                    Color(hex: "FDF7FB"), // Soft pale rose
-                    Color(hex: "F7F6FD"), // Soft lavender
+                    Color(hex: "FFE8F8"), // Soft pale rose
+                    Color(hex: "F1F4FF"), // Soft lavender
                     Color(hex: "FFFFFF")  // Pure white
                 ],
                 startPoint: .top,

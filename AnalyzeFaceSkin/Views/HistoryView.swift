@@ -18,9 +18,9 @@ struct HistoryView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(hex: "FDF7FB"), // Soft pale rose
-                        Color(hex: "F7F6FD"), // Soft lavender
-                        Color(hex: "FFFFFF")  // Pure white
+                        Color(hex: "FFE8F8"), // Soft pale rose
+                        Color(hex: "F1F4FF"), // Soft lavender
+                        Color(hex: "FEFEFE")  // Pure white
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -79,7 +79,6 @@ struct HistoryView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.left")
-                            Text("Back")
                         }
                         .foregroundColor(Color(hex: "5A4C47"))
                     }

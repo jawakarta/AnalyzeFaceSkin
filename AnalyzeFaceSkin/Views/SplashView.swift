@@ -16,9 +16,9 @@ struct SplashView: View {
             // Subtle warm pink/lavender to white background gradient
             LinearGradient(
                 colors: [
-                    Color(hex: "FDF7FB"), // Soft pale rose
-                    Color(hex: "F7F6FD"), // Soft lavender
-                    Color(hex: "FFFFFF")  // Pure white
+                    Color(hex: "FFE8F8"), // Soft pale rose
+                    Color(hex: "F1F4FF"), // Soft lavender
+                    Color(hex: "FEFEFE")  // Pure white
                 ],
                 startPoint: .top,
                 endPoint: .bottom
