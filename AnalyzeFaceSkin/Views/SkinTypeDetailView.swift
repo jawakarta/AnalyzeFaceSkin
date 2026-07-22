@@ -185,7 +185,7 @@ struct WhatIsItBox: View {
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             Image(systemName: "info.circle.fill")
-                .font(.system(size: 26))
+                .font(.system(size: 18))
                 .foregroundColor(Color(hex: "2596be"))
                 .padding(.top, 2)
             
@@ -219,7 +219,7 @@ struct CharacteristicsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                Image(systemName: "list.bullet.indent")
+                Image(systemName: "list.bullet")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(Color(hex: "4d3865"))
                     .frame(width: 20, alignment: .center)
@@ -337,15 +337,14 @@ struct SkinTypeTakeawayBox: View {
     let takeaway: String
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 8) {
             Image(systemName: "star.fill")
-                .font(.system(size: 24))
+                .font(.subheadline)
                 .foregroundColor(.orange)
-                .padding(.top, 2)
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Today's Takeaway")
-                    .font(.body)
+                    .font(.subheadline)
                     .fontWeight(.bold)
                     .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.1))
                 

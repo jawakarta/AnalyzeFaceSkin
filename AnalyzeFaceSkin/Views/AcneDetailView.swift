@@ -250,15 +250,14 @@ struct ChecklistRow: View {
 
 struct TakeawayBox: View {
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 8) {
             Image(systemName: "star.fill")
-                .font(.system(size: 24))
+                .font(.subheadline)
                 .foregroundColor(.orange)
-                .padding(.top, 2)
             
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Today's Takeaway")
-                    .font(.body)
+                    .font(.subheadline)
                     .fontWeight(.bold)
                     .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.1))
                 
