@@ -76,16 +76,20 @@ class AcneDetectionService {
             print("[AcneDetector] ℹ️  \(YOLO.modelName).mlpackage not found — using SkinConditionSegmenter fallback")
         }
 
-        // ── 3. Fallback: SkinConditionSegmenter ─────────────────────────────
-        do {
-            let seg = try SkinConditionSegmenter(configuration: cfg)
-            let vm  = try VNCoreMLModel(for: seg.model)
-            print("[AcneDetector] ✅ Fallback: SkinConditionSegmenter loaded")
-            return .segmenter(vm)
-        } catch {
-            print("[AcneDetector] ❌ SkinConditionSegmenter load also failed: \(error)")
-            return nil
+        // ── 3. Fallback: SkinConditionSegmenter (via bundle url) ─────────────
+        if let segUrl = Bundle.main.url(forResource: "SkinConditionSegmenter", withExtension: "mlpackage")
+                     ?? Bundle.main.url(forResource: "SkinConditionSegmenter", withExtension: "mlmodel") {
+            do {
+                let segModel = try MLModel(contentsOf: segUrl, configuration: cfg)
+                let vm       = try VNCoreMLModel(for: segModel)
+                print("[AcneDetector] ✅ Fallback: SkinConditionSegmenter loaded")
+                return .segmenter(vm)
+            } catch {
+                print("[AcneDetector] ❌ SkinConditionSegmenter load failed: \(error)")
+            }
         }
+
+        return nil
     }()
 
     // MARK: - Public Types
