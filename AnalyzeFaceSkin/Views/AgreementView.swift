@@ -17,9 +17,9 @@ struct AgreementView: View {
             // Premium background gradient matching home
             LinearGradient(
                 colors: [
-                    Color(hex: "F3B8A5"), // Soft Warm Peach
-                    Color(hex: "EBD4E2"), // Pastel Creamy Pink
-                    Color(hex: "D7D3EA")  // Gentle Lavender
+                    Color(hex: "FDF7FB"), // Soft pale rose
+                    Color(hex: "F7F6FD"), // Soft lavender
+                    Color(hex: "FFFFFF")  // Pure white
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -133,7 +133,7 @@ struct AgreementView: View {
                         .background(
                             isChecked ?
                             LinearGradient(
-                                colors: [Color(hex: "5E52B7"), Color(hex: "E95B82")],
+                                colors: [Color(hex: "4d3865"), Color(hex: "4d3865")],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ) :
@@ -157,9 +157,9 @@ struct AgreementView: View {
     private func agreementItem(icon: String, title: String, description: String) -> some View {
         HStack(alignment: .top, spacing: 16) {
             Image(systemName: icon)
-                .font(.system(size: 18))
+                .font(.system(size: 14))
                 .foregroundColor(Color(hex: "5E52B7"))
-                .frame(width: 28, height: 28)
+                .frame(width: 34, height: 34)
                 .background(Color(hex: "5E52B7").opacity(0.1))
                 .clipShape(Circle())
 

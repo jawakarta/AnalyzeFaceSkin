@@ -28,9 +28,9 @@ struct ContentView: View {
             case .captured(let image):
                 LinearGradient(
                     colors: [
-                        Color(hex: "F3B8A5"),
-                        Color(hex: "EBD4E2"),
-                        Color(hex: "D7D3EA")
+                        Color(hex: "FDF7FB"), // Soft pale rose
+                        Color(hex: "F7F6FD"), // Soft lavender
+                        Color(hex: "FFFFFF")  // Pure white
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -100,17 +100,19 @@ struct ContentView: View {
             case .scanning(let image):
                 LinearGradient(
                     colors: [
-                        Color(hex: "F3B8A5"),
-                        Color(hex: "EBD4E2"),
-                        Color(hex: "D7D3EA")
+                        Color(hex: "FDF7FB"), // Soft pale rose
+                        Color(hex: "F7F6FD"), // Soft lavender
+                        Color(hex: "FFFFFF")  // Pure white
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
                 .overlay {
-                    VStack(spacing: 0) {
-                        Spacer(minLength: 16)
+                    VStack(spacing: 24) {
+                        Spacer(minLength: 24)
+
+                        scanningStatusBadge
 
                         FaceScanningView(
                             image: image,
@@ -119,33 +121,16 @@ struct ContentView: View {
                             isAnalyzing: true
                         )
 
-                        Spacer(minLength: 20)
-
-                        Button("Cancel") {
-                            viewModel.reset()
-                        }
-                        .foregroundColor(Color(hex: "3A2E2B"))
-                        .font(.system(.subheadline, design: .rounded))
-                        .bold()
-                        .padding(.horizontal, 28)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.6))
-                        .cornerRadius(20)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 20)
-                                .stroke(Color.white.opacity(0.8), lineWidth: 1)
-                        )
-                        .shadow(color: Color.black.opacity(0.02), radius: 6, x: 0, y: 3)
-                        .padding(.bottom, 24)
+                        Spacer(minLength: 24)
                     }
                 }
                     
             case .result(let image, let result):
                 LinearGradient(
                     colors: [
-                        Color(hex: "F3B8A5"),
-                        Color(hex: "EBD4E2"),
-                        Color(hex: "D7D3EA")
+                        Color(hex: "FDF7FB"), // Soft pale rose
+                        Color(hex: "F7F6FD"), // Soft lavender
+                        Color(hex: "FFFFFF")  // Pure white
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -196,6 +181,29 @@ struct ContentView: View {
                 .opacity(1.0)
                 .allowsHitTesting(false)
         }
+    }
+
+    @ViewBuilder
+    private var scanningStatusBadge: some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(Color(hex: "EE4B6A"))
+                .frame(width: 10, height: 10)
+                .shadow(color: Color(hex: "EE4B6A").opacity(0.8), radius: 4)
+
+            Text("Scanning your skin...")
+                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 10)
+        .background(Color(hex: "563D45"))
+        .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color(hex: "EE4B6A").opacity(0.8), lineWidth: 1.5)
+        )
+        .shadow(color: Color.black.opacity(0.12), radius: 8, x: 0, y: 4)
     }
 
     @ViewBuilder

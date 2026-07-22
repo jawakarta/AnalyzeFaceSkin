@@ -51,18 +51,6 @@ struct SkinAnalysisResultView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
                         
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Your Skintuation")
-                                .font(.title)
-                                .fontWeight(.bold)
-                                .foregroundColor(.black)
-                            
-                            Text("Here's what we found from your scan.")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.horizontal, 20)
-                        
                         annotatedImageSection
                             .padding(.horizontal, 20)
 
@@ -83,13 +71,14 @@ struct SkinAnalysisResultView: View {
                 }
             }
         }
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(isPresented: $navigateToAcneDetail) {
             AcneDetailView(spotCount: result.acneBoundingBoxes.count)
         }
         .navigationDestination(isPresented: $navigateToSkinTypeDetail) {
             SkinTypeDetailView(skinType: result.skinType ?? "Normal")
         }
-        .navigationBarHidden(true)
         .onAppear {
             saveToHistory()
         }
@@ -116,6 +105,15 @@ struct SkinAnalysisResultView: View {
             }
             
             Spacer()
+
+            Text("Your Skintuation")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(Color(hex: "1C1B24"))
+
+            Spacer()
+
+            Color.clear
+                .frame(width: 38, height: 38)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)

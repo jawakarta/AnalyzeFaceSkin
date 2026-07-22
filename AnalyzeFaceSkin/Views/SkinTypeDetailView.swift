@@ -150,10 +150,6 @@ struct SkinTypeHeaderSection: View {
                 Circle()
                     .stroke(Color.black.opacity(0.8), lineWidth: 1.5)
                     .frame(width: 36, height: 36)
-                
-                Image(systemName: "drop.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(Color(hex: "2596be"))
             }
             
             VStack(alignment: .leading, spacing: 2) {
