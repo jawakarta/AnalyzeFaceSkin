@@ -19,12 +19,11 @@ private enum ConditionLayer: String, CaseIterable {
 
 
 struct SkinAnalysisResultView: View {
-    let image:            UIImage
-    let result:           SkinAnalysisResult
-    let grayscalePreview: UIImage?
-    let clahePreview:     UIImage?
-    var isFromHistory:    Bool = false
-    let onDone:           () -> Void
+    let image:         UIImage
+    let result:        SkinAnalysisResult
+    let clahePreview:  UIImage?
+    var isFromHistory: Bool = false
+    let onDone:        () -> Void
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -436,7 +435,6 @@ private struct BoundingBoxView: View {
                 SkinBoundingBox(x: 0.60, y: 0.30, width: 0.12, height: 0.10)
             ]
         ),
-        grayscalePreview: nil,
         clahePreview:     nil,
         onDone:           {}
     )
