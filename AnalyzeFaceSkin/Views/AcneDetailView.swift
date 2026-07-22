@@ -58,15 +58,12 @@ struct HeaderSection: View {
     
     var body: some View {
         HStack(alignment: .center) {
-            ZStack {
-                Circle()
-                    .stroke(Color.black.opacity(0.8), lineWidth: 1.5)
-                    .frame(width: 36, height: 36)
-                
-                Image(systemName: "scope")
-                    .font(.system(size: 18))
-                    .foregroundColor(.black)
-            }
+            Circle()
+                .fill(Color.red.opacity(0.6))
+                .frame(width: 32, height: 32)
+                .overlay(
+                    Circle().fill(Color.red).frame(width: 12, height: 12)
+                )
             
             VStack(alignment: .leading, spacing: 2) {
                 Text("Acne")
@@ -80,14 +77,7 @@ struct HeaderSection: View {
             }
             .padding(.leading, 8)
             
-            Spacer()
-            
-            Circle()
-                .fill(Color.red.opacity(0.6))
-                .frame(width: 32, height: 32)
-                .overlay(
-                    Circle().fill(Color.red).frame(width: 12, height: 12)
-                )
+
             
         }
         .padding(.vertical, 8)
@@ -111,14 +101,14 @@ struct DetectionAlertBox: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text(spotCount > 0
-                    ? "We detected \(spotCount) visible acne spot\(spotCount == 1 ? "" : "s") in your scan."
-                    : "No visible acne spots were detected in your scan.")
+                    ? "We detected \(spotCount) visible acne spot\(spotCount == 1 ? "" : "s")."
+                    : "No visible acne spots were detected.")
                     .font(.body)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
                     .fixedSize(horizontal: false, vertical: true)
                 
-                Text("Everyone gets acne sometimes. Understanding the cause is the first step to healthier skin.")
+                Text("No worries, everyone gets acne sometimes. Understanding the cause is the first step to healthier skin.")
                     .font(.subheadline)
                     .foregroundColor(.black.opacity(0.7))
                     .lineSpacing(4)
@@ -135,20 +125,17 @@ struct DetectionAlertBox: View {
 struct CausesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label {
+            HStack(spacing: 8) {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color(red: 0.85, green: 0.4, blue: 0.4))
+                    .frame(width: 20, alignment: .center)
+                
                 Text("What causes acne?")
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
-            } icon: {
-                Image(systemName: "questionmark.circle")
-                    .foregroundColor(Color(red: 0.85, green: 0.4, blue: 0.4))
             }
-            
-            Text("Acne happens when pores get clogged with oil, dead skin cells, and bacteria.")
-                .font(.subheadline)
-                .foregroundColor(.black.opacity(0.8))
-                .lineSpacing(4)
             
             VStack(alignment: .leading, spacing: 14) {
                 CauseRow(icon: "drop.fill", text: "Excess oil production", color: Color(red: 0.4, green: 0.2, blue: 0.3))
@@ -158,6 +145,7 @@ struct CausesSection: View {
                 CauseRow(icon: "moon.stars.fill", text: "Stress and lack of sleep", color: Color(red: 0.4, green: 0.3, blue: 0.6))
             }
             .padding(.top, 4)
+            .padding(.leading, 28)
         }
     }
 }
@@ -188,19 +176,17 @@ struct CauseRow: View {
 struct SkinCareSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label {
+            HStack(spacing: 8) {
+                Image(systemName: "checkmark.circle")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.green)
+                    .frame(width: 20, alignment: .center)
+                
                 Text("How to care for your skin")
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
-            } icon: {
-                Image(systemName: "checkmark.circle")
-                    .foregroundColor(.green)
             }
-            
-            Text("Simple steps you can do every day.")
-                .font(.subheadline)
-                .foregroundColor(.gray)
             
             VStack(alignment: .leading, spacing: 16) {
                 ChecklistRow(text: "Cleanse your face twice a day with a gentle cleanser.", color: .green)
@@ -208,6 +194,8 @@ struct SkinCareSection: View {
                 ChecklistRow(text: "Use lightweight, non-comedogenic moisturizer.", color: .green)
                 ChecklistRow(text: "Wear sunscreen every day.", color: .green)
             }
+            .padding(.top, 4)
+            .padding(.leading, 28)
         }
     }
 }
@@ -215,14 +203,16 @@ struct SkinCareSection: View {
 struct PreventionSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Label {
+            HStack(spacing: 8) {
+                Image(systemName: "shield")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.purple)
+                    .frame(width: 20, alignment: .center)
+                
                 Text("How to prevent more breakouts")
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundColor(.black)
-            } icon: {
-                Image(systemName: "shield")
-                    .foregroundColor(.purple)
             }
             
             VStack(alignment: .leading, spacing: 16) {
@@ -232,6 +222,7 @@ struct PreventionSection: View {
                 ChecklistRow(iconName: "takeoutbag.and.cup.and.straw", text: "Maintain a balanced diet and drink enough water.", color: .purple)
             }
             .padding(.top, 4)
+            .padding(.leading, 28)
         }
     }
 }
@@ -259,23 +250,24 @@ struct ChecklistRow: View {
 
 struct TakeawayBox: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "star")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.orange)
-                
+        HStack(alignment: .top, spacing: 16) {
+            Image(systemName: "star.fill")
+                .font(.system(size: 24))
+                .foregroundColor(.orange)
+                .padding(.top, 2)
+            
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Today's Takeaway")
-                    .font(.subheadline)
+                    .font(.body)
                     .fontWeight(.bold)
                     .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.1))
+                
+                Text("Consistency is key! A gentle routine and good habits can help reduce existing breakouts and prevent new ones.")
+                    .font(.subheadline)
+                    .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.1).opacity(0.9))
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            
-            Text("Consistency is key! A gentle routine and good habits can help reduce existing breakouts and prevent new ones.")
-                .font(.subheadline)
-                .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.1).opacity(0.9))
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)

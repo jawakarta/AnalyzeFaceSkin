@@ -122,13 +122,17 @@ struct HomeView: View {
                                         )
                                     )
                                 
-                                Text("Scan Your Skin")
-                                    .font(.system(size: 15, weight: .bold, design: .default))
-                                    .foregroundColor(Color(hex: "1C1B24"))
+                                VStack (spacing: 4) {
+                                    Text("Scan Your Skin")
+                                        .font(.system(size: 15, weight: .bold, design: .default))
+                                        .foregroundColor(Color(hex: "1C1B24"))
+                                    
+                                    Text("Tap to start")
+                                        .font(.system(size: 12, weight: .medium, design: .default))
+                                        .foregroundColor(Color(hex: "8E8D9E"))
+                                }
                                 
-                                Text("Tap to start")
-                                    .font(.system(size: 12, weight: .medium, design: .default))
-                                    .foregroundColor(Color(hex: "8E8D9E"))
+                                
                             }
                             .frame(width: 200, height: 200)
                             .background(Color.white)

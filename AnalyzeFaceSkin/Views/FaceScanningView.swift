@@ -38,10 +38,6 @@ struct FaceScanningView: View {
                     .blur(radius: 14)
                     .scaleEffect(1.15)
 
-                // 2. Outer Tech Corner Brackets around Oval Area
-                CornerBracketsShape()
-                    .stroke(Color.pink.opacity(0.4), lineWidth: 1.5)
-                    .padding(-10)
 
                 // 3. Pulsing Outer Glow Ring
                 Ellipse()
@@ -222,35 +218,6 @@ struct FaceScanningView: View {
     }
 }
 
-// Custom Shape to draw tech corner brackets
-struct CornerBracketsShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let length: CGFloat = 20
-        
-        // Top Left
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY + length))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX + length, y: rect.minY))
-        
-        // Top Right
-        path.move(to: CGPoint(x: rect.maxX - length, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + length))
-        
-        // Bottom Left
-        path.move(to: CGPoint(x: rect.minX, y: rect.maxY - length))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX + length, y: rect.maxY))
-        
-        // Bottom Right
-        path.move(to: CGPoint(x: rect.maxX - length, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - length))
-        
-        return path
-    }
-}
 
 // Custom Shape representing facial mesh connections based on real detected landmarks
 struct ActualFaceMeshShape: Shape {
