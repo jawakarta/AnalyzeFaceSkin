@@ -156,11 +156,10 @@ struct ContentView: View {
         .onChange(of: viewModel.captureState) { _, newState in
             if case .result(let image, let result) = newState {
                 navPath.append(.result(
-                    id:               UUID(),
-                    image:            image,
-                    result:           result,
-                    grayscalePreview: viewModel.grayscalePreview,
-                    clahePreview:     viewModel.clahePreview
+                    id:           UUID(),
+                    image:        image,
+                    result:       result,
+                    clahePreview: viewModel.clahePreview
                 ))
             }
         }

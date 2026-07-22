@@ -24,7 +24,6 @@ class CameraViewModel: ObservableObject {
     @Published var isAnalyzing = false
     @Published var analysisError: String? = nil
     @Published var showAnalysisErrorAlert = false
-    @Published var grayscalePreview: UIImage? = nil
     @Published var clahePreview: UIImage? = nil
 
     let cameraService = CameraService()
@@ -95,7 +94,6 @@ class CameraViewModel: ObservableObject {
         isAnalyzing = true
         analysisResult = nil
         analysisError = nil
-        grayscalePreview = nil
         clahePreview = nil
         
         let startTime = Date()
@@ -109,7 +107,6 @@ class CameraViewModel: ObservableObject {
                 switch result {
                 case .success(let output):
                     self?.analysisResult = output.result
-                    self?.grayscalePreview = output.grayscalePreview
                     self?.clahePreview = output.clahePreview
                     self?.captureState = .result(image, output.result)
                 case .failure(let error):
@@ -133,7 +130,6 @@ class CameraViewModel: ObservableObject {
         stopStabilityTimer()
         analysisResult = nil
         isAnalyzing = false
-        grayscalePreview = nil
         clahePreview = nil
         cameraService.start()
     }

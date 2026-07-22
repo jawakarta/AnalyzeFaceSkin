@@ -75,7 +75,7 @@ struct HomeView: View {
                             .font(.system(size: 18, weight: .medium, design: .default))
                             .foregroundColor(Color(hex: "757482"))
                         
-                        Text("Let's take care of your skin.")
+                        Text("Let's take care of your skin. tes")
                             .font(.system(size: 24, weight: .bold, design: .default))
                             .foregroundColor(Color(hex: "1C1B24"))
                     }
@@ -277,12 +277,11 @@ struct HomeView: View {
                 case .camera:
                     ContentView(navPath: $navPath)
                         .navigationBarBackButtonHidden(true)
-                case .result(_, let image, let result, let grayscale, let clahe):
+                case .result(_, let image, let result, let clahe):
                     SkinAnalysisResultView(
-                        image:            image,
-                        result:           result,
-                        grayscalePreview: grayscale,
-                        clahePreview:     clahe
+                        image:        image,
+                        result:       result,
+                        clahePreview: clahe
                     ) {
                         navPath.removeAll()
                     }
@@ -326,14 +325,13 @@ enum AppScreen: Hashable {
     case result(id: UUID = UUID(),
                 image: UIImage,
                 result: SkinAnalysisResult,
-                grayscalePreview: UIImage?,
                 clahePreview: UIImage?)
     
     func hash(into hasher: inout Hasher) {
         switch self {
         case .camera:
             hasher.combine(0)
-        case .result(let id, _, _, _, _):
+        case .result(let id, _, _, _):
             hasher.combine(1)
             hasher.combine(id)
         }
@@ -343,7 +341,7 @@ enum AppScreen: Hashable {
         switch (lhs, rhs) {
         case (.camera, .camera):
             return true
-        case (.result(let id1, _, _, _, _), .result(let id2, _, _, _, _)):
+        case (.result(let id1, _, _, _), .result(let id2, _, _, _)):
             return id1 == id2
         default:
             return false

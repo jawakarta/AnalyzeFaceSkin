@@ -12,9 +12,8 @@ class SkinAnalysisService {
     private lazy var conditionService = AcneDetectionService()
 
     struct AnalysisOutput {
-        let result:            SkinAnalysisResult
-        let grayscalePreview:  UIImage?
-        let clahePreview:      UIImage?
+        let result:       SkinAnalysisResult
+        let clahePreview: UIImage?
     }
 
     func analyze(image: UIImage,
@@ -52,9 +51,8 @@ class SkinAnalysisService {
                         acneBoundingBoxes: conditionData?.acne.boundingBoxes ?? []
                     )
                     let output = AnalysisOutput(
-                        result:           result,
-                        grayscalePreview: conditionData?.grayscalePreview,
-                        clahePreview:     conditionData?.clahePreview
+                        result:       result,
+                        clahePreview: conditionData?.clahePreview
                     )
                     completion(.success(output))
                 }
